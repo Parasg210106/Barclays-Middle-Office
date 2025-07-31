@@ -1,0 +1,86 @@
+{
+    "mandatory_fields": [
+      "Trade ID", "ISIN", "Trade Type", "Quantity", "Price", "Trade Value", 
+      "Trade Date", "Settlement Date", "Settlement Status", "KYC Status",
+      "Commission", "Taxes", "Total Cost"
+    ],
+  
+    "format_rules": {
+      "Trade Date": "date",
+      "Settlement Date": "date",
+      "Quantity": "int",
+      "Price": "float",
+      "Trade Value": "float",
+      "Commission": "float",
+      "Taxes": "float",
+      "Total Cost": "float",
+      "ISIN": "isin", 
+      "KYC Status": ["Complete", "Incomplete"],
+      "Reference Data Validated": ["Yes", "No"],
+      "Settlement Status": ["Pending", "Completed", "Failed"],
+      "Trade Type": ["Buy", "Sell"]
+    },
+  
+    "logical_rules": [
+      {
+        "rule": "Settlement Date >= Trade Date",
+        "description": "Settlement date must not be before trade date"
+      },
+      {
+        "rule": "Trade Value == Quantity * Price",
+        "description": "Trade value should equal quantity multiplied by price"
+      },
+      {
+        "rule": "Total Cost == Trade Value + Commission + Taxes",
+        "description": "Total cost must match calculated total"
+      }
+    ],
+  
+    "static_validation": {
+      "Currency": ["USD", "EUR", "INR", "JPY", "GBP"],
+      "Settlement Status": ["Pending", "Completed", "Failed"],
+      "KYC Status": ["Complete", "Incomplete"]
+    },
+  
+    "custom_rules": [
+      {
+        "field": "Counterparty",
+        "condition": "== 'Unknown'",
+        "action": "flag_manual_review"
+      },
+      {
+        "field": "Reference Data Validated",
+        "condition": "!= 'Yes'",
+        "action": "flag_reference_data_issue"
+      },
+      {
+        "field": "KYC Status",
+        "condition": "!= 'Complete'",
+        "action": "flag_kyc_incomplete"
+      }
+    ],
+  
+    "department_assignment": {
+      "TSA": [
+        "Trade Date",
+        "Settlement Date",
+        "MaturityDate",
+        "Trade Type"
+      ],
+      "LCM": [
+        "Quantity",
+        "Price",
+        "Trade Value",
+        "KYC Status"
+      ],
+      "Front Office": [
+        "Counterparty",
+        "Symbol",
+        "ProductType"
+      ],
+      "IBMO": [
+        "Trade ID"
+      ]
+    }
+  }
+  

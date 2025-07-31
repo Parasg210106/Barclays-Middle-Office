@@ -1,0 +1,209 @@
+{
+  "mandatory_fields": [
+    "TradeID", "TradeDate", "Counterparty", "CurrencyPair", "BuySell", 
+    "DealtCurrency", "BaseCurrency", "TermCurrency", "NotionalAmount", 
+    "FXRate", "ProductType", "MaturityDate", "SettlementDate", "KYCCheck"
+  ],
+
+  "format_rules": {
+    "TradeDate": "date",
+    "MaturityDate": "date",
+    "SettlementDate": "date",
+    "NotionalAmount": "float",
+    "FXRate": "float",
+    "BuySell": ["Buy", "Sell"],
+    "ProductType": ["Spot", "Forward", "Swap", "Option", "NDF"],
+    "KYCCheck": ["Complete", "Incomplete", "Pending", "Rejected"],
+    "CurrencyPair": "currency_pair",
+    "DealtCurrency": "currency_code",
+    "BaseCurrency": "currency_code",
+    "TermCurrency": "currency_code"
+  },
+
+  "logical_rules": [
+    {
+      "rule": "SettlementDate >= TradeDate",
+      "description": "Settlement date must not be before trade date"
+    },
+    {
+      "rule": "MaturityDate >= TradeDate",
+      "description": "Maturity date must not be before trade date"
+    },
+    {
+      "rule": "MaturityDate >= SettlementDate",
+      "description": "Maturity date must not be before settlement date"
+    },
+    {
+      "rule": "FXRate > 0",
+      "description": "FX Rate must be positive"
+    },
+    {
+      "rule": "NotionalAmount > 0",
+      "description": "Notional amount must be positive"
+    },
+    {
+      "rule": "NotionalAmount >= 1000",
+      "description": "Notional amount must be at least 1000"
+    },
+    {
+      "rule": "FXRate <= 1000",
+      "description": "FX Rate must be reasonable (<= 1000)"
+    },
+    {
+      "rule": "TradeDate <= today",
+      "description": "Trade date cannot be in the future"
+    },
+    {
+      "rule": "SettlementDate <= today + 30",
+      "description": "Settlement date cannot be more than 30 days in the future"
+    }
+  ],
+
+  "static_validation": {
+    "CurrencyPair": [
+      "USD/EUR", "EUR/USD", "USD/GBP", "GBP/USD", "USD/JPY", "JPY/USD", 
+      "EUR/GBP", "GBP/EUR", "USD/CHF", "CHF/USD", "USD/CAD", "CAD/USD",
+      "AUD/USD", "USD/AUD", "NZD/USD", "USD/NZD", "EUR/JPY", "JPY/EUR",
+      "GBP/JPY", "JPY/GBP", "EUR/CHF", "CHF/EUR", "GBP/CHF", "CHF/GBP"
+    ],
+    "DealtCurrency": ["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "SGD", "HKD"],
+    "BaseCurrency": ["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "SGD", "HKD"],
+    "TermCurrency": ["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "SGD", "HKD"],
+    "ProductType": ["Spot", "Forward", "Swap", "Option", "NDF"],
+    "KYCCheck": ["Complete", "Incomplete", "Pending", "Rejected"],
+    "Counterparty": [
+      "Goldman Sachs", "JP Morgan", "Morgan Stanley", "Citigroup", "Bank of America",
+      "Deutsche Bank", "UBS", "Credit Suisse", "Barclays", "HSBC", "BNP Paribas",
+      "Societe Generale", "RBC", "TD Securities", "CIBC", "Scotiabank"
+    ]
+  },
+
+  "business_rules": [
+    {
+      "rule": "Spot trades must have SettlementDate = TradeDate + 2",
+      "description": "Spot trades typically settle T+2"
+    },
+    {
+      "rule": "Forward trades must have MaturityDate > SettlementDate",
+      "description": "Forward trades must have a future maturity date"
+    },
+    {
+      "rule": "Option trades must have ProductType = 'Option'",
+      "description": "Options must be marked as Option product type"
+    },
+    {
+      "rule": "NDF trades must have ProductType = 'NDF'",
+      "description": "NDF trades must be marked as NDF product type"
+    },
+    {
+      "rule": "CurrencyPair must match DealtCurrency/BaseCurrency format",
+      "description": "Currency pair must match the dealt/base currency combination"
+    }
+  ],
+
+  "custom_rules": [
+    {
+      "field": "Counterparty",
+      "condition": "== 'Unknown'",
+      "action": "flag_manual_review"
+    },
+    {
+      "field": "Counterparty",
+      "condition": "not in ['Goldman Sachs', 'JP Morgan', 'Morgan Stanley', 'Citigroup', 'Bank of America', 'Deutsche Bank', 'UBS', 'Credit Suisse', 'Barclays', 'HSBC', 'BNP Paribas', 'Societe Generale', 'RBC', 'TD Securities', 'CIBC', 'Scotiabank']",
+      "action": "flag_unknown_counterparty"
+    },
+    {
+      "field": "KYCCheck",
+      "condition": "!= 'Complete'",
+      "action": "flag_kyc_incomplete"
+    },
+    {
+      "field": "KYCCheck",
+      "condition": "== 'Rejected'",
+      "action": "flag_kyc_rejected"
+    },
+    {
+      "field": "FXRate",
+      "condition": "<= 0",
+      "action": "flag_invalid_fx_rate"
+    },
+    {
+      "field": "FXRate",
+      "condition": "> 1000",
+      "action": "flag_unreasonable_fx_rate"
+    },
+    {
+      "field": "NotionalAmount",
+      "condition": "<= 0",
+      "action": "flag_invalid_notional"
+    },
+    {
+      "field": "NotionalAmount",
+      "condition": "< 1000",
+      "action": "flag_small_notional"
+    },
+    {
+      "field": "NotionalAmount",
+      "condition": "> 1000000000",
+      "action": "flag_large_notional"
+    },
+    {
+      "field": "ProductType",
+      "condition": "== 'Option'",
+      "action": "flag_option_trade"
+    },
+    {
+      "field": "ProductType",
+      "condition": "== 'NDF'",
+      "action": "flag_ndf_trade"
+    }
+  ],
+
+  "field_descriptions": {
+    "TradeDate": "Date when the trade was executed (YYYY-MM-DD format)",
+    "Counterparty": "The other party in the trade transaction",
+    "CurrencyPair": "The currency pair being traded (e.g., USD/EUR)",
+    "BuySell": "Whether the trade is a buy or sell transaction",
+    "DealtCurrency": "The currency being bought or sold",
+    "BaseCurrency": "The base currency in the pair",
+    "TermCurrency": "The term currency in the pair",
+    "NotionalAmount": "The notional amount of the trade",
+    "FXRate": "The foreign exchange rate for the trade",
+    "ProductType": "Type of forex product (Spot, Forward, Swap, Option, NDF)",
+    "MaturityDate": "Date when the trade matures (YYYY-MM-DD format)",
+    "SettlementDate": "Date when the trade settles (YYYY-MM-DD format)",
+    "KYCCheck": "Know Your Customer verification status"
+  },
+
+  "validation_priorities": {
+    "critical": ["TradeID", "TradeDate", "Counterparty", "CurrencyPair", "NotionalAmount", "FXRate"],
+    "high": ["BuySell", "ProductType", "SettlementDate", "KYCCheck"],
+    "medium": ["DealtCurrency", "BaseCurrency", "TermCurrency", "MaturityDate"]
+  },
+
+  "department_assignment": {
+    "TSA": [
+        "TradeDate",
+        "SettlementDate",
+        "MaturityDate",
+        "BuySell"
+    ],
+    "LCM": [
+        "FXRate",
+        "NotionalAmount",
+        "TradeValue",
+        "KYCCheck"
+    ],
+    "Front Office": [
+        "Counterparty",
+        "CurrencyPair",
+        "ProductType",
+        "BaseCurrency",
+        "TermCurrency",
+        "DealtCurrency"
+    ],
+    "IBMO": [
+        "TradeID"
+    ]
+  }
+}

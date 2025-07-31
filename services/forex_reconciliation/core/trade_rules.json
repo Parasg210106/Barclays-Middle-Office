@@ -1,0 +1,19 @@
+{
+    "fo_fo": [
+      "RateMismatch",
+      "AmountMismatch",
+      "BuySellMismatch",
+      "CurrencyPairMismatch",
+      "ProductTypeMismatch"
+    ],
+    "fo_bo": [
+      "SettlementDateMismatch",
+      "ValueDateMismatch",
+      "FXRateMismatch",
+      "BuySellMismatch",
+      "CurrencyPairMismatch",
+      "ProductTypeMismatch",
+      "AmountMismatch"
+    ]
+  }
+  

@@ -1,0 +1,150 @@
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: tradesim
+      POSTGRES_PASSWORD: tradesim
+      POSTGRES_DB: tradesim
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+
+  trade-capture:
+    build: ./services/trade_capture
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8001:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  trade-validation:
+    build: ./services/trade_validation
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8002:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  trade-enrichment:
+    build: ./services/trade_enrichment
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8003:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  risk-check:
+    build: ./services/risk_check
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8004:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  trade-allocation:
+    build: ./services/trade_allocation
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8005:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  trade-lifecycle:
+    build: ./services/trade_lifecycle
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8006:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  exception-handler:
+    build: ./services/exception_handler
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8007:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=tradesim
+      - DB_USER=tradesim
+      - DB_PASSWORD=tradesim
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - trade-capture
+      - trade-lifecycle
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata: 

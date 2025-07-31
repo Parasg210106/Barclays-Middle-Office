@@ -1,0 +1,5 @@
+{
+    "ProductType": {"allowed": ["FORWARD", "SWAP", "SPOT"]},
+    "BuySell": {"allowed": ["BUY", "SELL"]},
+    "unique_trade_id": true
+  } 

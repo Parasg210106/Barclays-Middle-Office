@@ -1,0 +1,3 @@
+Trade ID,Order ID,Client ID,ISIN,Symbol,Trade Type,Quantity,Price,Trade Value,Currency,Maturity Date,Trade Date,Counterparty,Trader Name,KYC Status,Reference Data Validated,Collateral Required,Margin Type,Coupon rate,Coupon schedule ,Observation Dates,Auto-call level,Margin Status,event_type
+TID00013,OID00013,CID4114,US311929322,ADBE,Buy,274,1355.76,371478.24,GBP,1/24/2024,07/14/2023,Morgan Stanley,Trader A,Completed,Yes,18573.91,Variation,,,6.0,75%,Satisfied,Early-Redemption
+TID00017,OID00017,CID1786,US927329389,GOOGL,Buy,450,1182.04,531918.0,USD,3/17/2024,04/12/2025,JPMorgan,Trader D,Failed,No,26595.9,Variation,,,3.0,60%,Failed,Early-Redemption

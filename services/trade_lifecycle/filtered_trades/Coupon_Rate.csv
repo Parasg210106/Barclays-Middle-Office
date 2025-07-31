@@ -1,0 +1,1 @@
+TradeID,TradeDate,ValueDate,TradeTime,TraderID,Counterparty,CurrencyPair,BuySell,DealtCurrency,BaseCurrency,TermCurrency,NotionalAmount,FXRate,TradeStatus,ProductType,MaturityDate,SettlementDate,Portfolio,RegulatoryReportingStatus,TradeComplianceStatus,KYCCheck,SanctionsScreening,ExceptionFlag,ExceptionNotes,event_type

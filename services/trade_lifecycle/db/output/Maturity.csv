@@ -1,0 +1,5 @@
+Trade ID,Order ID,Client ID,ISIN,Symbol,Trade Type,Quantity,Price,Trade Value,Currency,Maturity Date,Trade Date,Counterparty,Trader Name,KYC Status,Reference Data Validated,Collateral Required,Margin Type,Coupon rate,Coupon schedule ,Observation Dates,Auto-call level,Margin Status,event_type
+TID00004,OID00004,CID4233,US918886777,NFLX,Sell,528,722.5,381480.0,USD,07/11/2025,02/10/2024,Citibank,Trader B,Pending,No,19074.0,Variation,,,,,Pending,Maturity
+TID00008,OID00008,CID7079,US951500830,NVDA,Sell,730,1335.37,974820.1,EUR,07/07/2025,04/03/2024,JPMorgan,Trader A,Pending,Yes,48741.01,Variation,,,,,Failed,Maturity
+TID00016,OID00016,CID3859,US613556217,AAPL,Sell,353,1071.12,378105.36,GBP,07/28/2025,3/26/2024,Morgan Stanley,Trader B,Completed,Yes,18905.27,Initial,,Semi-annual ,,,Pending,Maturity
+TID00020,OID00020,CID2179,US377248184,TSLA,Buy,724,784.03,567637.72,EUR,06/23/2025,1/21/2024,Citibank,Trader C,Pending,No,28381.89,Variation,,,,,Pending,Maturity

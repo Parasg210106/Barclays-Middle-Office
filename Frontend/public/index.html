@@ -1,0 +1,2856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Middle Office - Trade Booking Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/styles/output.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-nav-active {
+            background-color: white !important;
+            color: #000 !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+        }
+        
+        #sidebar nav a.sidebar-nav-active {
+            background-color: white !important;
+            color: #000 !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Force sidebar highlighting to work */
+        #sidebar nav a.sidebar-nav-active {
+            background-color: white !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: bold !important;
+            display: block !important;
+            padding: 0.625rem 1rem !important;
+            margin: 2px 0 !important;
+        }
+        
+        /* Additional specificity to ensure highlighting works */
+        #sidebar nav a.sidebar-nav-active,
+        #sidebar nav a[onclick*="overview"].sidebar-nav-active,
+        #sidebar nav a[onclick*="lifecycle-events"].sidebar-nav-active,
+        #sidebar nav a[onclick*="reconciliation"].sidebar-nav-active,
+        #sidebar nav a[onclick*="consolidated-data"].sidebar-nav-active,
+        #sidebar nav a[onclick*="loadAndShowTradeValidation"].sidebar-nav-active {
+            background-color: white !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: bold !important;
+            display: block !important;
+            padding: 0.625rem 1rem !important;
+            margin: 2px 0 !important;
+        }
+        
+        #sidebar nav a {
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 1.1rem !important;
+        }
+        
+        #sidebar .text-white {
+            color: white !important;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+        .modal {
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+        th {
+            cursor: pointer;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* New Termsheet Styling */
+        .termsheet-container {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+        }
+        .termsheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #000;
+            padding-bottom: 0.5rem;
+        }
+        .termsheet-title {
+            font-weight: bold;
+        }
+        .termsheet-isin {
+            text-align: right;
+        }
+        .termsheet-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+            align-items: flex-start;
+        }
+        .item-col-1 {
+            width: 5%;
+            min-width: 30px;
+        }
+        .item-col-2 {
+            width: 40%;
+            padding-right: 1rem;
+        }
+        .item-col-3 {
+            width: 55%;
+            word-break: break-word;
+        }
+        .sub-item {
+            padding-left: 20px;
+        }
+        .sub-item .item-col-2 {
+            width: 38%;
+        }
+        .sub-item .item-col-3 {
+            width: 57%;
+        }
+        .double-sub-item {
+            padding-left: 40px;
+        }
+         .double-sub-item .item-col-2 {
+            width: 35%;
+        }
+        .double-sub-item .item-col-3 {
+            width: 60%;
+        }
+        .item-label {
+            font-weight: bold;
+        }
+        .item-value {
+           font-weight: normal;
+        }
+        .termsheet-footer {
+            margin-top: 2rem;
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+        /* Add or update these styles for all tables */
+        .reconciliation-table, .validation-table, .lifecycle-table, .consolidated-table {
+            color: #000 !important; /* Black font */
+            font-size: 0.85rem !important; /* Slightly smaller font */
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .reconciliation-table th, .reconciliation-table td,
+        .validation-table th, .validation-table td,
+        .lifecycle-table th, .lifecycle-table td {
+            border: none !important;
+            border-bottom: 1px solid #333 !important; /* Only horizontal row borders */
+            padding: 0.5rem 0.5rem;
+            background: #fff;
+            text-align: center !important; /* Center align all text */
+        }
+        
+        .consolidated-table th, .consolidated-table td {
+            border: 1px solid #333 !important; /* Darker borders for both columns and rows */
+            padding: 0.5rem 0.5rem;
+            background: #fff;
+            text-align: center !important; /* Center align all text */
+        }
+        .reconciliation-table th, .validation-table th, .consolidated-table th {
+            background: rgba(61, 202, 253, 0.25) !important;
+            font-weight: bold;
+        }
+        
+        .lifecycle-table th {
+            background: rgba(61, 202, 253, 0.25) !important;
+            font-weight: bold;
+        }
+        
+        /* More specific rule to ensure lifecycle table headers get the color */
+        #lifecycle-events-table th {
+            background: rgba(61, 202, 253, 0.25) !important;
+            font-weight: bold;
+        }
+        .lifecycle-table, .lifecycle-table th, .lifecycle-table td {
+            color: #000 !important;
+            border: none !important;
+            border-bottom: 1px solid #333 !important;
+            text-align: center !important;
+            background: #fff !important;
+        }
+        
+        /* Override any Tailwind text alignment classes */
+        .lifecycle-table .text-left,
+        .lifecycle-table .text-right {
+            text-align: center !important;
+        }
+        
+        /* Force borders on all lifecycle table elements */
+        #lifecycle-events-table,
+        #lifecycle-events-table td {
+            border: none !important;
+            border-bottom: 1px solid #333 !important;
+            color: #000 !important;
+            text-align: center !important;
+            background: #fff !important;
+        }
+        
+        /* Ensure lifecycle table headers have the cyan background */
+        #lifecycle-events-table th {
+            border: none !important;
+            border-bottom: 1px solid #333 !important;
+            color: #000 !important;
+            text-align: center !important;
+            background: rgba(61, 202, 253, 0.25) !important;
+            font-weight: bold !important;
+        }
+        
+        /* General rule for all table headers across all sections */
+        table th {
+            background: rgba(61, 202, 253, 0.25) !important;
+            font-weight: bold !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <script>
+        // Define fallback function immediately to ensure it's available
+        // Use Object.defineProperty to prevent overwriting
+        if (typeof window.loadAndShowTradeValidation === 'undefined') {
+            Object.defineProperty(window, 'loadAndShowTradeValidation', {
+                value: function() {
+                    // Handle highlighting directly to avoid infinite loop
+                    document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+                    document.getElementById('trade-validation').classList.add('active');
+                    
+                    // Add active class to sidebar
+                    document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                        navItem.classList.remove('sidebar-nav-active');
+                    });
+                    const activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+                    if (activeNavItem) {
+                        activeNavItem.classList.add('sidebar-nav-active');
+                    }
+                    
+                    // Try to call the real function if it exists now
+                    if (typeof window.loadAndShowTradeValidationReal === 'function') {
+                        window.loadAndShowTradeValidationReal();
+                    } else {
+                        // Render empty table for now
+                        if (typeof renderAllTables === 'function') {
+                            renderAllTables();
+                        }
+                    }
+                },
+                writable: false,
+                configurable: false
+            });
+        }
+        
+        // Ensure function always exists - check periodically
+        function ensureLoadAndShowTradeValidationExists() {
+            if (typeof window.loadAndShowTradeValidation === 'undefined') {
+                Object.defineProperty(window, 'loadAndShowTradeValidation', {
+                                    value: function() {
+                    // Handle highlighting directly to avoid infinite loop
+                    document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+                    document.getElementById('trade-validation').classList.add('active');
+                    
+                    // Add active class to sidebar
+                    document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                        navItem.classList.remove('sidebar-nav-active');
+                    });
+                    const activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+                    if (activeNavItem) {
+                        activeNavItem.classList.add('sidebar-nav-active');
+                    }
+                    
+                    // Try to call the real function if it exists now
+                    if (typeof window.loadAndShowTradeValidationReal === 'function') {
+                        window.loadAndShowTradeValidationReal();
+                    } else {
+                        // Render empty table for now
+                        if (typeof renderAllTables === 'function') {
+                            renderAllTables();
+                        }
+                    }
+                },
+                    writable: false,
+                    configurable: false
+                });
+            }
+        }
+        
+        // Check every 2 seconds to ensure function exists
+        setInterval(ensureLoadAndShowTradeValidationExists, 2000);
+        
+        // Test function to manually highlight tabs
+        window.testHighlight = function(tabName) {
+            // Remove all highlights
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            // Add highlight to specific tab
+            const navItem = document.querySelector(`#sidebar nav a[onclick*="${tabName}"]`);
+            if (navItem) {
+                navItem.classList.add('sidebar-nav-active');
+            }
+        };
+        
+        // Unified function to handle tab switching and highlighting
+        window.switchTab = function(tabName) {
+            // Handle highlighting for all tabs
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            
+            // Add highlight to the clicked tab
+            const navItem = document.querySelector(`#sidebar nav a[onclick*="${tabName}"]`);
+            if (navItem) {
+                navItem.classList.add('sidebar-nav-active');
+            }
+            
+            // Handle view switching based on tab
+            if (tabName === 'loadAndShowTradeValidation') {
+                // Special handling for Trade Validation
+                if (typeof window.loadAndShowTradeValidation === 'function') {
+                    window.loadAndShowTradeValidation();
+                }
+            } else {
+                // Use showView for other tabs
+                if (typeof window.showView === 'function') {
+                    window.showView(tabName);
+                }
+            }
+        };
+    </script>
+    <div class="flex h-screen">
+        
+        <div id="sidebar" class="sidebar bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0">
+            <div class="px-4">
+                <a href="#" class="text-white text-2xl font-semibold block">Middle Office</a>
+                <span class="text-white text-sm opacity-80">Barclays PLC</span>
+            </div>
+            <nav>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="switchTab('overview')">Overview</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="switchTab('loadAndShowTradeValidation')">Trade Validation</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="switchTab('lifecycle-events')">Trade Lifecycle</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="switchTab('reconciliation')">Reconciliation</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="switchTab('consolidated-data')" id="consolidated-data-nav">MO Distribution</a>
+            </nav>
+            <!-- Add this just before the closing sidebar div -->
+            <button id="toggle-consolidated-info" title="Toggle Consolidated Data Tab" style="position: absolute; bottom: 20px; left: 20px; width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; color: #222; border: none; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; z-index: 1000;">i</button>
+        </div>
+
+        
+        <div id="main-content" class="main-content flex-1 flex flex-col overflow-hidden">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4">
+                
+                <div id="overview" class="view active">
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+                        <h2 class="text-2xl font-bold mb-4 cursor-pointer hover:text-blue-600 transition-colors" onclick="openTitlePopup('overview')">Overview</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-200 flex flex-col justify-between" onclick="showDashboardModal('totalTrades')">
+                            <h2 class="text-lg font-semibold text-center text-black">Total Trades</h2>
+                            <p id="total-trades" class="text-3xl font-bold text-center" style="color: #3969f7;">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-200 flex flex-col justify-between" onclick="showDashboardModal('lifecycleEvents')">
+                            <h2 class="text-lg font-semibold text-center text-black">Lifecycle Events Pending</h2>
+                            <p id="lifecycle-pending" class="text-3xl font-bold text-center" style="color: #3969f7;">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-200 flex flex-col justify-between" onclick="showDashboardModal('reconciliationBreaks')">
+                            <h2 class="text-lg font-semibold text-center text-black">Reconciliation Breaks</h2>
+                            <p id="breaks" class="text-3xl font-bold text-center" style="color: #3969f7;">0</p>
+                        </div>
+                    </div>
+
+
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex-1 min-w-[300px]">
+                                <h3 class="text-lg font-semibold mb-2">Upload Trade Files for Simulation</h3>
+                                <p class="text-gray-600 mb-4">Upload one or more CSV files. The system will process all trades and simulate the full middle office workflow.</p>
+                                <label for="trade-file-upload" class="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                    <span class="block mb-2">Click to upload or drag and drop</span>
+                                    <span class="text-xs text-gray-500">Equity or Forex CSV files</span>
+                                    <input id="trade-file-upload" type="file" class="hidden" accept=".csv" onchange="handleFileUpload(event)" multiple>
+                                </label>
+                            </div>
+                            <div class="flex-1 min-w-[300px]">
+                                <h3 class="text-lg font-semibold mb-2">Generate Termsheet from File(s)</h3>
+                                <p class="text-gray-600 mb-4">Upload one or more CSV files for multiple trades to generate and view termsheets directly.</p>
+                                <label for="termsheet-file-upload" class="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                    <span class="block mb-2">Click to upload or drag and drop</span>
+                                    <span class="text-xs text-gray-500">Single or multiple-trade CSV files</span>
+                                    <input id="termsheet-file-upload" type="file" class="hidden" accept=".csv" onchange="handleTermsheetFileUpload(event)" multiple>
+                                </label>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
+
+                
+                <div id="trade-validation" class="view">
+                    <div class="bg-white p-4 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 cursor-pointer hover:text-blue-600 transition-colors" onclick="openTitlePopup('trade-validation')">Trade Validation</h2>
+                        <div id="tv-filters" class="flex justify-between items-center mb-4 flex-wrap gap-2"></div>
+                        <div class="overflow-x-auto">
+                            <table class="validation-table w-full text-sm text-left">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 cursor-pointer hover:bg-gray-300" onclick="sortByTradeId()">TradeID</th>
+                                        <th class="px-4 py-2">Trader ID</th>
+                                        <th class="px-4 py-2">Currency</th>
+                                        <th class="px-4 py-2">Trade Date</th>
+                                        <th class="px-4 py-2">KYC Status</th>
+                                        <th class="px-4 py-2">Validation Status</th>
+                                        <th class="px-4 py-2">Assigned To</th>
+                                        <th class="px-4 py-2">Actions</th>  
+                                    </tr>
+                                </thead>
+                                <tbody id="trade-validation-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Inserted reconciliation view below -->
+                <div id="reconciliation" class="view">
+                   <div class="bg-white p-4 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 cursor-pointer hover:text-blue-600 transition-colors" onclick="openTitlePopup('reconciliation')">Reconciliation</h2>
+                        <div class="w-full flex flex-col items-center mb-6">
+                            <div class="w-full flex flex-row justify-between mb-2">
+                                <div class="flex-1 flex flex-col items-center">
+                                    <span class="font-semibold text-lg mb-2">FOFO Capture</span>
+                                    <div class="flex flex-row gap-4">
+                                        <div class="flex flex-col items-center">
+                                            <button class="bg-gray-100 border border-gray-400 rounded-lg font-semibold hover:bg-gray-200" style="width: 160px; height: 60px; padding: 15px;" onclick="uploadCsv('systemA')">System A</button>
+                                            <input type="file" id="systemA-upload" accept=".csv" class="hidden" onchange="handleCsvUpload(event, 'systemA')">
+                                        </div>
+                                        <div class="flex flex-col items-center">
+                                            <button class="bg-gray-100 border border-gray-400 rounded-lg font-semibold hover:bg-gray-200" style="width: 160px; height: 60px; padding: 15px;" onclick="uploadCsv('systemB')">System B</button>
+                                            <input type="file" id="systemB-upload" accept=".csv" class="hidden" onchange="handleCsvUpload(event, 'systemB')">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center">
+                                    <span class="font-semibold text-lg mb-2">FOBO Capture</span>
+                                    <div class="flex flex-row gap-4">
+                                        <div class="flex flex-col items-center">
+                                            <button class="bg-gray-100 border border-gray-400 rounded-lg font-semibold hover:bg-gray-200" style="width: 160px; height: 60px; padding: 15px;" onclick="uploadCsv('fo')">Front Office</button>
+                                            <input type="file" id="fo-upload" accept=".csv" class="hidden" onchange="handleCsvUpload(event, 'fo')">
+                                        </div>
+                                        <div class="flex flex-col items-center">
+                                            <button class="bg-gray-100 border border-gray-400 rounded-lg font-semibold hover:bg-gray-200" style="width: 160px; height: 60px; padding: 15px;" onclick="uploadCsv('bo')">Back Office</button>
+                                            <input type="file" id="bo-upload" accept=".csv" class="hidden" onchange="handleCsvUpload(event, 'bo')">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full flex justify-start mt-4 mb-4 gap-4">
+                                <select id="fofo-fobo-toggle" class="border rounded px-3 py-2 text-sm" onchange="toggleReconciliationSection()">
+                                    <option value="">Recon type</option>
+                                    <option value="fofo">FO-FO</option>
+                                    <option value="fobo">FO-BO</option>
+                                </select>
+                                <select id="instrument-toggle" class="border rounded px-3 py-2 text-sm" onchange="toggleInstrumentType()">
+                                    <option value="">Instrument</option>
+                                    <option value="forex">Forex</option>
+                                    <option value="equity">Equity</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="fofo-section">
+                            <div>
+                                <h3 class="font-semibold mb-2">FO-FO Reconciliation</h3>
+                                <table class="reconciliation-table">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-2 py-1">Trade ID</th>
+                                            <th class="px-2 py-1">System A</th>
+                                            <th class="px-2 py-1">System B</th>
+                                            <th class="px-2 py-1">Discrepancy</th>
+                                            <th class="px-2 py-1">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fofo-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="fobo-section" style="display:none;">
+                            <div>
+                                <h3 class="font-semibold mb-2">FO-BO Reconciliation</h3>
+                                <table class="reconciliation-table">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-2 py-1">Trade ID</th>
+                                            <th class="px-2 py-1">Front Office</th>
+                                            <th class="px-2 py-1">Back Office</th>
+                                            <th class="px-2 py-1">Discrepancy</th>
+                                            <th class="px-2 py-1">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fobo-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                   </div>
+                </div>
+
+                
+                <div id="lifecycle-events" class="view">
+                     <div class="bg-white p-4 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 cursor-pointer hover:text-blue-600 transition-colors" onclick="openTitlePopup('lifecycle-events')">Trade Lifecycle</h2>
+                        <div id="lifecycle-events-container">
+                          <table class="lifecycle-table w-full text-sm text-center" id="lifecycle-events-table">
+                            <thead id="lifecycle-events-thead"></thead>
+                            <tbody id="lifecycle-events-body"></tbody>
+                          </table>
+                        </div>
+                     </div>
+                </div>
+
+
+                <div id="consolidated-data" class="view">
+                    <div class="bg-white p-4 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4">Consolidated Data</h2>
+                        <div id="middle-office-section">
+                            <div class="overflow-x-auto">
+                                <table class="consolidated-table w-full text-sm text-left" id="consolidated-data-table">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                                        <tr>
+                                            <th class="px-4 py-2 cursor-pointer hover:bg-gray-300" onclick="sortByTradeId()">TradeID</th>
+                                            <th class="px-4 py-2">TradeDate</th>
+                                            <th class="px-4 py-2">ValueDate</th>
+                                            <th class="px-4 py-2">TradeTime</th>
+                                            <th class="px-4 py-2">TraderID</th>
+                                            <th class="px-4 py-2">Counterparty</th>
+                                            <th class="px-4 py-2">Counterparty ID</th>
+                                            <th class="px-4 py-2">LEI</th>
+                                            <th class="px-4 py-2">CurrencyPair</th>
+                                            <th class="px-4 py-2">BuySell</th>
+                                            <th class="px-4 py-2">DealtCurrency</th>
+                                            <th class="px-4 py-2">BaseCurrency</th>
+                                            <th class="px-4 py-2">TermCurrency</th>
+                                            <th class="px-4 py-2">NotionalAmount</th>
+                                            <th class="px-4 py-2">FXRate</th>
+                                            <th class="px-4 py-2">TradeStatus</th>
+                                            <th class="px-4 py-2">SettlementStatus</th>
+                                            <th class="px-4 py-2">SettlementMethod</th>
+                                            <th class="px-4 py-2">Broker</th>
+                                            <th class="px-4 py-2">ExecutionVenue</th>
+                                            <th class="px-4 py-2">ProductType</th>
+                                            <th class="px-4 py-2">MaturityDate</th>
+                                            <th class="px-4 py-2">ConfirmationTimestamp</th>
+                                            <th class="px-4 py-2">SettlementDate</th>
+                                            <th class="px-4 py-2">BookingLocation</th>
+                                            <th class="px-4 py-2">Portfolio</th>
+                                            <th class="px-4 py-2">TradeVersion</th>
+                                            <th class="px-4 py-2">CancellationFlag</th>
+                                            <th class="px-4 py-2">AmendmentFlag</th>
+                                            <th class="px-4 py-2">RiskSystemID</th>
+                                            <th class="px-4 py-2">RegulatoryReportingStatus</th>
+                                            <th class="px-4 py-2">TradeSourceSystem</th>
+                                            <th class="px-4 py-2">ConfirmationMethod</th>
+                                            <th class="px-4 py-2">ConfirmationStatus</th>
+                                            <th class="px-4 py-2">SettlementInstructions</th>
+                                            <th class="px-4 py-2">Custodian_Name</th>
+                                            <th class="px-4 py-2">NettingEligibility</th>
+                                            <th class="px-4 py-2">TradeComplianceStatus</th>
+                                            <th class="px-4 py-2">KYCCheck</th>
+                                            <th class="px-4 py-2">SanctionsScreening</th>
+                                            <th class="px-4 py-2">ExceptionFlag</th>
+                                            <th class="px-4 py-2">AuditTrailRef</th>
+                                            <th class="px-4 py-2">CommissionAmount</th>
+                                            <th class="px-4 py-2">CommissionCurrency</th>
+                                            <th class="px-4 py-2">BrokerageFee</th>
+                                            <th class="px-4 py-2">BrokerageCurrency</th>
+                                            <th class="px-4 py-2">CustodyFee</th>
+                                            <th class="px-4 py-2">CustodyCurrency</th>
+                                            <th class="px-4 py-2">SettlementCost</th>
+                                            <th class="px-4 py-2">SettlementCurrency</th>
+                                            <th class="px-4 py-2">FXGainLoss</th>
+                                            <th class="px-4 py-2">PnlCalculated</th>
+                                            <th class="px-4 py-2">CostAllocationStatus</th>
+                                            <th class="px-4 py-2">CostCenter</th>
+                                            <th class="px-4 py-2">ExpenseApprovalStatus</th>
+                                            <th class="px-4 py-2">CostBookedDate</th>
+                                            <th class="px-4 py-2">Exception Type</th>
+                                            <th class="px-4 py-2">Exception Description</th>
+                                            <th class="px-4 py-2">Exception Resolution</th>
+                                            <th class="px-4 py-2">Reporting Regulation</th>
+                                            <th class="px-4 py-2">Exception Reason</th>
+                                            <th class="px-4 py-2">Reporting Resolution</th>
+                                            <th class="px-4 py-2">RID</th>
+                                            <th class="px-4 py-2">ISIN</th>
+                                            <th class="px-4 py-2">Symbol</th>
+                                            <th class="px-4 py-2">Trading Venue</th>
+                                            <th class="px-4 py-2">Stock_Currency</th>
+                                            <th class="px-4 py-2">Country_of_Trade</th>
+                                            <th class="px-4 py-2">Instrument_Status</th>
+                                            <th class="px-4 py-2">ClientID_Equity</th>
+                                            <th class="px-4 py-2">KYC_Status_Equity</th>
+                                            <th class="px-4 py-2">Reference_Data_Validated</th>
+                                            <th class="px-4 py-2">Margin_Type</th>
+                                            <th class="px-4 py-2">Margin_Status</th>
+                                            <th class="px-4 py-2">Client_Approval_Status_Equity</th>
+                                            <th class="px-4 py-2">ClientID_Forex</th>
+                                            <th class="px-4 py-2">KYC_Status_Forex</th>
+                                            <th class="px-4 py-2">Expense_Approval_Status</th>
+                                            <th class="px-4 py-2">Client Approval Status(forex)</th>
+                                            <th class="px-4 py-2">Custodian_Ac_no</th>
+                                            <th class="px-4 py-2">Beneficiary_Client_ID</th>
+                                            <th class="px-4 py-2">Settlement_Cycle</th>
+                                            <th class="px-4 py-2">EffectiveDate_Equity</th>
+                                            <th class="px-4 py-2">ConfirmationStatus_Equity</th>
+                                            <th class="px-4 py-2">SWIFT_Equity</th>
+                                            <th class="px-4 py-2">BeneficiaryName_Equity</th>
+                                            <th class="px-4 py-2">Account_Number_Equity</th>
+                                            <th class="px-4 py-2">ABA_Equity</th>
+                                            <th class="px-4 py-2">BSB_Equity</th>
+                                            <th class="px-4 py-2">IBAN_Equity</th>
+                                            <th class="px-4 py-2">SORT_Equity</th>
+                                            <th class="px-4 py-2">Zengin_Equity</th>
+                                            <th class="px-4 py-2">Settlement_Method_Equity</th>
+                                            <th class="px-4 py-2">EffectiveDate_Forex</th>
+                                            <th class="px-4 py-2">ConfirmationStatus_Forex</th>
+                                            <th class="px-4 py-2">Account Number_Forex</th>
+                                            <th class="px-4 py-2">SWIFT_Forex</th>
+                                            <th class="px-4 py-2">BeneficiaryName_Forex</th>
+                                            <th class="px-4 py-2">ABA_Forex</th>
+                                            <th class="px-4 py-2">BSB_Forex</th>
+                                            <th class="px-4 py-2">IBAN_Forex</th>
+                                            <th class="px-4 py-2">SORT_Forex</th>
+                                            <th class="px-4 py-2">Zengin_Forex</th>
+                                            <th class="px-4 py-2">Settlement_Method_Forex</th>
+                                            <th class="px-4 py-2">Document ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="consolidated-data-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- New Multi-Source Data Table -->
+                        <div class="bg-white p-4 rounded-lg shadow-md mt-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-2xl font-bold">Multi-Source Data</h2>
+                                <button id="save-multi-source-btn" onclick="saveMultiSourceData()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    Save Selected Rows
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-black border-collapse" style="border: 1px solid #333;" id="multi-source-data-table">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                                        <tr>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Assign Document ID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeDate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ValueDate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeTime</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TraderID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Counterparty ID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BuySell</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">DealtCurrency</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">NotionalAmount</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">FXRate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Broker</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">MaturityDate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationTimestamp</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementDate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeVersion</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CancellationFlag</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">AmendmentFlag</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">RiskSystemID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">RegulatoryReportingStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeSourceSystem</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationMethod</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeComplianceStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">KYCCheck</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ExceptionFlag</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">AuditTrailRef</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CommissionAmount</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CommissionCurrency</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BrokerageFee</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BrokerageCurrency</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CustodyFee</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CustodyCurrency</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementCost</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">FXGainLoss</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">PnlCalculated</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostAllocationStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostCenter</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostBookedDate</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Type</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Description</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Resolution</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reporting Regulation</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Reason</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reporting Resolution</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">RID</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ISIN</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Symbol</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Trading Venue</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Stock_Currency</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Country_of_Trade</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Instrument_Status</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ClientID_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">KYC_Status_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reference_Data_Validated</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Margin_Type</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Margin_Status</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Client_Approval_Status_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Client Approval Status(forex)</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Custodian_Ac_no</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Cycle</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">EffectiveDate_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationStatus_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">SWIFT_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BeneficiaryName_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Account_Number_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ABA_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BSB_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">IBAN_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">SORT_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Zengin_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Method_Equity</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationStatus_Forex</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">account</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">BeneficiaryName_Forex</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">ABA_Forex</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Zengin_Forex</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Method_Forex</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">uniqueid</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">callAmount</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">exposure</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">bookingStatus</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">disputeAmount</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">priceMovement</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">bookingType</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">disputeReason</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">marginCallId</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">comments</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">reason</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">agreedAmount</th>
+                                            <th class="px-4 py-2" style="border: 1px solid #333;">client</th>
+                                            <th class="px-4 py-2 border border-gray-300">notes</th>
+                                            <th class="px-4 py-2 border border-gray-300">date</th>
+                                            <th class="px-4 py-2 border border-gray-300">marginRequirement</th>
+                                            <th class="px-4 py-2 border border-gray-300">accountName</th>
+                                            <th class="px-4 py-2 border border-gray-300">domicile</th>
+                                            <th class="px-4 py-2 border border-gray-300">mta.amount</th>
+                                            <th class="px-4 py-2 border border-gray-300">mta.currency</th>
+                                            <th class="px-4 py-2 border border-gray-300">currencies</th>
+                                            <th class="px-4 py-2 border border-gray-300">assets</th>
+                                            <th class="px-4 py-2 border border-gray-300">holidays</th>
+                                            <th class="px-4 py-2 border border-gray-300">threshold</th>
+                                            <th class="px-4 py-2 border border-gray-300">reportingCurrency</th>
+                                            <th class="px-4 py-2 border border-gray-300">contact.phone</th>
+                                            <th class="px-4 py-2 border border-gray-300">contact.email</th>
+                                            <th class="px-4 py-2 border border-gray-300">notificationTime</th>
+                                            <th class="px-4 py-2 border border-gray-300">principalEntity</th>
+                                            <th class="px-4 py-2 border border-gray-300">direction</th>
+                                            <th class="px-4 py-2 border border-gray-300">clientId</th>
+                                            <th class="px-4 py-2 border border-gray-300">Validation status</th>
+                                            <th class="px-4 py-2 border border-gray-300">Event Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="multi-source-data-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    
+    <div id="generic-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center">
+        <div class="relative mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+             <div class="text-left">
+                <div class="flex justify-between items-center pb-3">
+                    <h3 id="modal-title" class="text-xl leading-6 font-medium text-gray-900"></h3>
+                    <div class="modal-close cursor-pointer z-50" onclick="closeModal()">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
+                    </div>
+                </div>
+                <div id="modal-body" class="mt-2 px-7 py-3 max-h-[70vh] overflow-y-auto">
+                    
+                </div>
+                <div id="modal-footer" class="items-center px-4 py-3 text-right">
+                     <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase App (core) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firestore (for real-time DB) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="scripts/fileHandler.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script>
+        // Test if ui.js loaded properly
+        if (typeof window.loadAndShowTradeValidationReal === 'undefined') {
+            console.error('ui.js did not load properly - loadAndShowTradeValidationReal is undefined');
+        }
+    </script>
+    <!-- Reconciliation Functions -->
+    <script>
+        // Title popup functionality - defined at the top to ensure availability
+        function openTitlePopup(pageType) {
+            const modal = document.getElementById('title-popup-modal');
+            const modalContent = document.getElementById('title-popup-content');
+            
+            if (!modal || !modalContent) {
+                console.error('Modal elements not found');
+                return;
+            }
+            
+            // Set content based on page type
+            let content = '';
+            switch(pageType) {
+                case 'overview':
+                    content = `The Middle Office (MO) serves as a critical link between the Front Office and the Back Office.<br><br>
+• The Front Office includes our traders and sales teams.<br>
+• The Back Office handles the post-trade process.<br><br>
+The Middle Office ensures that what's recorded by the Front Office is accurate, compliant, and complete before it moves downstream to the Back Office, ensuring data integrity, minimizing operational risk, and ensuring smooth end-to-end processing`;
+                    break;
+                case 'trade-validation':
+                    content = `Trade validation ensures that the details of the trade captured by the Front Office matches that of the legally binding document - the Termsheet. This prevents deviation from the agreed terms. Any mismatch between the system and termsheet is escalated to the relevant team and solved.`;
+                    break;
+                case 'lifecycle-events':
+                    content = `Lifecycle Events refers to the monitoring of specific post-trade events that occur after a trade has been validated. Many trades go through important transitions till maturity, and this tab helps us track and manage them.<br><br>
+There are mainly four types of lifecycle events:<br><br>
+1. Maturity – This is the default lifecycle event for most trades, where the trade reaches its end date and the principal is returned.<br><br>
+2. Early Redemption – Sometimes, a trade is closed earlier than planned, often due to embedded options or mutual agreements.<br><br>
+3. Barrier Monitoring – Common in structured or exotic trades. These events depend on certain market thresholds (or barriers) being reached or breached.<br><br>
+4. Coupon Rate – These are the interest payments or income generated by the trade, often at fixed or floating intervals.`;
+                    break;
+                case 'reconciliation':
+                    content = `Reconciliation is about ensuring internal consistency — that the trade data in our Front Office systems matches that in our Back Office or other internal platforms.<br><br>
+There are primarily two types of reconciliation:<br><br>
+• FOFO (Front Office to Front Office) – where we compare data between two front office systems, like trading vs risk platforms.<br><br>
+• FOBO (Front Office to Back Office) – where we check that FO data aligns with settlement, accounting, or confirmations systems.`;
+                    break;
+                default:
+                    content = 'Page information will be displayed here.';
+            }
+            
+            modalContent.innerHTML = content;
+            modal.classList.add('active');
+        }
+
+        function closeTitlePopup() {
+            const modal = document.getElementById('title-popup-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Helper function to get action statement based on mismatch type and reconciliation type
+function getActionStatement(field, reconciliationType) {
+    if (reconciliationType === 'FO-FO') {
+        switch(field) {
+            case 'fxrate':
+                return 'Confirm correct FX rate from execution logs and align both FO systems.';
+            case 'notionalamount':
+                return 'Verify trade notional. Contact support if unclear or trade is disputed.';
+            case 'buy/sell':
+                return 'Validate trade direction; correct side or mail trader for confirmation.';
+            case 'instrument':
+                return 'Check currency pair mapping. Contact ops team if unclear.';
+            case 'producttype':
+                return 'Review product classification; mail booking desk if mismatch persists.';
+            default:
+                return 'Review discrepancy and take appropriate action.';
+        }
+    } else if (reconciliationType === 'FO-BO') {
+        switch(field) {
+            case 'settlementdate':
+                return 'Confirm market convention (e.g., T+1) and update system. Contact BO team if needed.';
+            case 'fxrate':
+                return 'Verify applied FX rate. Escalate via email if BO and FO differ persistently.';
+            case 'buy/sell':
+                return 'Cross-check trade side. Contact trade owner if discrepancy remains.';
+            case 'instrument':
+                return 'Validate FX pair legs; escalate to booking support if mismatched.';
+            case 'producttype':
+                return 'Recheck trade type. Notify risk team if classification seems invalid.';
+            case 'notionalamount':
+                return 'Confirm deal size from trade capture. Contact settlements team if mismatch unresolved.';
+            default:
+                return 'Review discrepancy and take appropriate action.';
+        }
+    }
+    return 'Review discrepancy and take appropriate action.';
+}
+        // Define reconciliation functions immediately
+        function uploadCsv(type) {
+            document.getElementById(type + '-upload').click();
+        }
+        
+        function toggleReconciliationSection() {
+            const toggle = document.getElementById('fofo-fobo-toggle');
+            const fofoSection = document.getElementById('fofo-section');
+            const foboSection = document.getElementById('fobo-section');
+            
+            // Hide both sections if no option is selected
+            if (!toggle.value) {
+                fofoSection.style.display = 'none';
+                foboSection.style.display = 'none';
+                return;
+            }
+            
+            if (toggle.value === 'fofo') {
+                fofoSection.style.display = '';
+                foboSection.style.display = 'none';
+            } else {
+                fofoSection.style.display = 'none';
+                foboSection.style.display = '';
+            }
+            
+            // Use the new reconciliation functions from ui.js
+            const instrumentToggle = document.getElementById('instrument-toggle');
+            if (instrumentToggle) {
+                if (instrumentToggle.value === 'equity') {
+                    window.loadAndShowEquityReconciliation && window.loadAndShowEquityReconciliation();
+                } else if (instrumentToggle.value === 'forex') {
+                    window.loadAndShowForexReconciliation && window.loadAndShowForexReconciliation();
+                } else {
+                    // Default to forex if no selection
+                    window.loadAndShowForexReconciliation && window.loadAndShowForexReconciliation();
+                }
+            }
+        }
+        
+        function toggleInstrumentType() {
+            // Don't refresh tables if no instrument type is selected
+            const instrumentToggle = document.getElementById('instrument-toggle');
+            if (!instrumentToggle.value) {
+                return;
+            }
+            
+            // Automatically trigger reconciliation when instrument type changes
+            if (instrumentToggle.value === 'equity') {
+                window.loadAndShowEquityReconciliation && window.loadAndShowEquityReconciliation();
+            } else if (instrumentToggle.value === 'forex') {
+                window.loadAndShowForexReconciliation && window.loadAndShowForexReconciliation();
+            }
+        }
+        
+        // loadReconciliationTables function removed - now handled by ui.js functions
+        
+        // getReconciliationResults function removed - now handled by ui.js functions
+        
+        // Old table rendering functions removed - now handled by ui.js
+        
+        // Define the table rendering functions in the inline script
+        async function fetchAndRenderFOFOTable() {
+            try {
+                // Get current instrument type
+                const instrumentToggle = document.getElementById('instrument-toggle');
+                const instrumentType = instrumentToggle.value;
+                
+                // Don't fetch data if no instrument type is selected
+                if (!instrumentType) {
+                    const tbody = document.getElementById('fofo-table-body');
+                    if (tbody) tbody.innerHTML = '';
+                    return;
+                }
+                
+                // Fetch all data from fx_systemA_capture (for Trade IDs and System A column)
+                const systemAData = await fetchFromFirebaseCollection('fx_systemA_capture');
+                // Fetch all data from fx_systemB_capture (for System B column)
+                const systemBData = await fetchFromFirebaseCollection('fx_systemB_capture');
+                
+                // Get reconciliation results from backend
+                const reconciliationResults = await getReconciliationResults('FO-FO');
+                
+                const tbody = document.getElementById('fofo-table-body');
+                if (!tbody) {
+                    return;
+                }
+                tbody.innerHTML = '';
+                
+                // Create a map of Trade ID to System B data
+                const systemBMap = new Map();
+                systemBData.forEach(item => {
+                    systemBMap.set(item['Trade ID'], item);
+                });
+                
+                // Create a map of Trade ID to reconciliation results
+                const reconciliationMap = new Map();
+                reconciliationResults.forEach(result => {
+                    reconciliationMap.set(result.TradeID, result);
+                });
+                
+                // Helper to check instrument type by Trade ID
+                function isInstrumentType(tradeId, type) {
+                    if (!tradeId) return false;
+                    if (type === 'forex') return tradeId.startsWith('FX');
+                    if (type === 'equity') return tradeId.startsWith('TID');
+                    return false;
+                }
+                
+                // Helper to format FOFO cell
+                function formatFOFOCell(item) {
+                    if (!item) return '-';
+                    const buysell = item['Buy/Sell'] || '-';
+                    const productType = item['Product Type'] || '-';
+                    const currencypair = item['Instrument'] || '-';
+                    const notional = item['Notional Amount'] || '-';
+                    const fxrate = item['FX Rate'] || '-';
+                    const counterparty = item['Counterparty'] || '-';
+                    return `${buysell} ${productType} contract of ${currencypair} worth ${notional} at the rate of ${fxrate}.<br>Counterparty: ${counterparty}`;
+                }
+                
+                // Render rows for each Trade ID in systemAData, filtered by instrument type
+                systemAData.forEach(systemAItem => {
+                    const tradeId = systemAItem['Trade ID'];
+                    if (!isInstrumentType(tradeId, instrumentType)) return;
+                    const systemBItem = systemBMap.get(tradeId);
+                    // Find reconciliation result by TradeID (backend uses 'TradeID', frontend uses 'Trade ID')
+                    let reconciliationResult = null;
+                    // Try to find by both possible keys
+                    if (reconciliationMap.has(tradeId)) {
+                        reconciliationResult = reconciliationMap.get(tradeId);
+                    } else if (reconciliationMap.has(systemAItem['TradeID'])) {
+                        reconciliationResult = reconciliationMap.get(systemAItem['TradeID']);
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'border-t border-gray-200';
+                    
+                    const systemAValue = formatFOFOCell(systemAItem);
+                    const systemBValue = formatFOFOCell(systemBItem);
+                    let discrepancyText = '';
+                    let actionText = '';
+                    if (reconciliationResult && reconciliationResult.discrepancies && reconciliationResult.discrepancies.length > 0) {
+                        discrepancyText = formatDiscrepancyText(reconciliationResult.discrepancies);
+                        // Get action statement for the first discrepancy
+                        const firstDiscrepancy = reconciliationResult.discrepancies[0];
+                        actionText = getActionStatement(firstDiscrepancy.field, 'FO-FO');
+                    } else {
+                        discrepancyText = 'No discrepancy';
+                        actionText = 'NA';
+                    }
+                    
+                    row.innerHTML = `
+                        <td class=\"px-2 py-1\">${tradeId || '-'}</td>
+                        <td class=\"px-2 py-1\">${systemAValue}</td>
+                        <td class=\"px-2 py-1\">${systemBValue}</td>
+                        <td class=\"px-2 py-1\">${discrepancyText}</td>
+                        <td class=\"px-2 py-1\">${actionText}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error fetching FOFO data:', err);
+                const tbody = document.getElementById('fofo-table-body');
+                if (tbody) tbody.innerHTML = '';
+            }
+        }
+        
+        async function fetchAndRenderFOBOTable() {
+            try {
+                // Get current instrument type
+                const instrumentToggle = document.getElementById('instrument-toggle');
+                const instrumentType = instrumentToggle.value;
+                
+                // Don't fetch data if no instrument type is selected
+                if (!instrumentType) {
+                    const tbody = document.getElementById('fobo-table-body');
+                    if (tbody) tbody.innerHTML = '';
+                    return;
+                }
+                
+                // Fetch all data from fx_FOentry_capture (for Trade IDs and Front Office column)
+                const foData = await fetchFromFirebaseCollection('fx_FOentry_capture');
+                // Fetch all data from fx_BOentry_capture (for Back Office column)
+                const boData = await fetchFromFirebaseCollection('fx_BOentry_capture');
+                
+                // Get reconciliation results from backend
+                const reconciliationResults = await getReconciliationResults('FO-BO');
+                
+                const tbody = document.getElementById('fobo-table-body');
+                if (!tbody) {
+                    console.error('FOBO table body not found');
+                    return;
+                }
+                tbody.innerHTML = '';
+                
+                // Create a map of Trade ID to Back Office data
+                const boMap = new Map();
+                boData.forEach(item => {
+                    boMap.set(item['Trade ID'], item);
+                });
+                
+                // Create a map of Trade ID to reconciliation results
+                const reconciliationMap = new Map();
+                reconciliationResults.forEach(result => {
+                    reconciliationMap.set(result.TradeID, result);
+                });
+                
+                // Helper to check instrument type by Trade ID
+                function isInstrumentType(tradeId, type) {
+                    if (!tradeId) return false;
+                    if (type === 'forex') return tradeId.startsWith('FX');
+                    if (type === 'equity') return tradeId.startsWith('TID');
+                    return false;
+                }
+                
+                // Helper to format FOBO cell
+                function formatFOBOCell(item) {
+                    if (!item) return '-';
+                    const buysell = item['Buy/Sell'] || '-';
+                    const productType = item['Product Type'] || '-';
+                    const currencypair = item['Instrument'] || '-';
+                    const notional = item['Notional Amount'] || '-';
+                    const fxrate = item['FX Rate'] || '-';
+                    const settlement = item['Settlement Date'] || '-';
+                    const counterparty = item['Counterparty'] || '-';
+                    return `${buysell} ${productType} contract of ${currencypair} worth ${notional} at the rate of ${fxrate}, to be settled on ${settlement}.<br>Counterparty: ${counterparty}`;
+                }
+                
+                // Render rows for each Trade ID in foData, filtered by instrument type
+                foData.forEach(foItem => {
+                    const tradeId = foItem['Trade ID'];
+                    if (!isInstrumentType(tradeId, instrumentType)) return;
+                    const boItem = boMap.get(tradeId);
+                    // Find reconciliation result by TradeID (backend uses 'TradeID', frontend uses 'Trade ID')
+                    let reconciliationResult = null;
+                    if (reconciliationMap.has(tradeId)) {
+                        reconciliationResult = reconciliationMap.get(tradeId);
+                    } else if (reconciliationMap.has(foItem['TradeID'])) {
+                        reconciliationResult = reconciliationMap.get(foItem['TradeID']);
+                    }
+                    
+                    const foValue = formatFOBOCell(foItem);
+                    const boValue = formatFOBOCell(boItem);
+                    let discrepancyText = '';
+                    let actionText = '';
+                    if (reconciliationResult && reconciliationResult.discrepancies && reconciliationResult.discrepancies.length > 0) {
+                        discrepancyText = formatDiscrepancyText(reconciliationResult.discrepancies);
+                        // Get action statement for the first discrepancy
+                        const firstDiscrepancy = reconciliationResult.discrepancies[0];
+                        actionText = getActionStatement(firstDiscrepancy.field, 'FO-BO');
+                    } else {
+                        discrepancyText = 'No discrepancy';
+                        actionText = 'NA';
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'border-t border-gray-200';
+                    row.innerHTML = `
+                        <td class=\"px-2 py-1\">${tradeId || '-'}</td>
+                        <td class=\"px-2 py-1\">${foValue}</td>
+                        <td class=\"px-2 py-1\">${boValue}</td>
+                        <td class=\"px-2 py-1\">${discrepancyText}</td>
+                        <td class=\"px-2 py-1\">${actionText}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error fetching FOBO data:', err);
+                const tbody = document.getElementById('fobo-table-body');
+                if (tbody) tbody.innerHTML = '';
+            }
+        }
+        
+        async function fetchFromFirebaseCollection(collectionName, instrumentType = null) {
+            try {
+                // Initialize Firebase if not already done
+                if (!window.firebase) {
+                    console.error('Firebase not initialized');
+                    return [];
+                }
+                
+                const db = firebase.firestore();
+                let snapshot;
+                
+                // Removed direct Firestore filtering by 'Instrument' field
+                snapshot = await db.collection(collectionName).get();
+                
+                const data = [];
+                snapshot.forEach(doc => {
+                    data.push(doc.data());
+                });
+                
+                return data;
+                
+            } catch (err) {
+                console.error(`Error fetching from Firebase collection ${collectionName}:`, err);
+                return [];
+            }
+        }
+        
+        async function handleCsvUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // First, read the CSV to determine if it's equity or forex
+            const text = await file.text();
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            // Find the Trade ID column
+            const tradeIdIndex = headers.findIndex(h => 
+                h.toLowerCase().includes('trade') && h.toLowerCase().includes('id')
+            );
+            
+            if (tradeIdIndex === -1) {
+                alert('Error: No Trade ID column found in CSV file');
+                return;
+            }
+            
+            // Check the first few non-empty trade IDs to determine type
+            let isEquity = false;
+            let isForex = false;
+            
+            for (let i = 1; i < Math.min(lines.length, 5); i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                    const tradeId = values[tradeIdIndex];
+                    if (tradeId) {
+                        if (tradeId.startsWith('TID')) {
+                            isEquity = true;
+                            break;
+                        } else if (tradeId.startsWith('FX')) {
+                            isForex = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!isEquity && !isForex) {
+                alert('Error: Could not determine trade type. Trade IDs must start with "TID" (equity) or "FX" (forex)');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            let endpoint = '';
+            let serviceName = '';
+            
+            if (isEquity) {
+                // Use equity service endpoints
+                switch(type) {
+                    case 'systemA': 
+                        endpoint = 'http://localhost:8021/upload_systemA_csv';
+                        serviceName = 'Equity System A';
+                        break;
+                    case 'systemB': 
+                        endpoint = 'http://localhost:8022/upload_systemB_csv';
+                        serviceName = 'Equity System B';
+                        break;
+                    case 'fo': 
+                        endpoint = 'http://localhost:8027/upload_FOentry_csv';
+                        serviceName = 'Equity Front Office';
+                        break;
+                    case 'bo': 
+                        endpoint = 'http://localhost:8023/upload_BOentry_csv';
+                        serviceName = 'Equity Back Office';
+                        break;
+                }
+            } else {
+                // Use forex service endpoints (existing)
+                switch(type) {
+                    case 'systemA': 
+                        endpoint = 'http://localhost:8017/upload_systemA_csv';
+                        serviceName = 'Forex System A';
+                        break;
+                    case 'systemB': 
+                        endpoint = 'http://localhost:8018/upload_systemB_csv';
+                        serviceName = 'Forex System B';
+                        break;
+                    case 'fo': 
+                        endpoint = 'http://localhost:8019/upload_FOentry_csv';
+                        serviceName = 'Forex Front Office';
+                        break;
+                    case 'bo': 
+                        endpoint = 'http://localhost:8020/upload_BOentry_csv';
+                        serviceName = 'Forex Back Office';
+                        break;
+                }
+            }
+            
+            try {
+                const response = await fetch(endpoint, { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                alert(`${serviceName} file uploaded successfully! ${result.count} records processed.`);
+                
+                // After upload, refresh the tables
+                            // loadReconciliationTables call removed - now handled by ui.js functions
+                
+            } catch (err) {
+                alert(`${serviceName} upload failed: ${err.message}`);
+            }
+        }
+    </script>
+    <script>
+        // --- CONFIG ---
+        const TRADE_LIFECYCLE_API_BASE = 'http://localhost:8024'; // Backend URL for Trade Lifecycle service
+        
+        // Helper function to safely set text content
+        function safeSetTextContent(elementId, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = text;
+            }
+        }
+        
+
+        
+        // Test if ui.js is loaded
+
+        // --- Global State ---
+        let sortState = {}; // { view: 'tradeValidation', column: 'TradeID', direction: 'asc' }
+        let allTrades = []; // Initialize empty array for all trades
+
+        // --- Basic UI Interaction ---
+        const menuButton = document.getElementById('menu-button');
+        const sidebar = document.getElementById('sidebar');
+        menuButton.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+        
+
+
+        function showView(viewId) {
+            // Remove active class from all views
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Remove active class from all sidebar navigation items
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            
+            // Add active class to the clicked navigation item
+            let activeNavItem = document.querySelector(`#sidebar nav a[onclick*="${viewId}"]`);
+            
+            // Special handling for trade-validation view
+            if (viewId === 'trade-validation' && !activeNavItem) {
+                activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+            }
+            
+            if (activeNavItem) {
+                activeNavItem.classList.add('sidebar-nav-active');
+            }
+            
+            const title = viewId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            // document.getElementById('view-title').textContent = title; // Element doesn't exist
+            renderAllTables(); // Re-render tables when view changes
+            if (viewId === 'overview') {
+                if (window.updateTradeCountFromBackend) {
+                    window.updateTradeCountFromBackend();
+                }
+                if (window.updateOverviewStats) {
+                    window.updateOverviewStats();
+                } else {
+                    // Try to call it manually after a delay
+                    setTimeout(() => {
+                        if (window.updateOverviewStats) {
+                            window.updateOverviewStats();
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        // --- File Handling & Data Simulation ---
+        // Remove or comment out the entire inline handleFileUpload function definition and any related inline file upload logic.
+
+        function processNewTrades(tradesData) {
+            if (tradesData.length === 0) return;
+
+            let queryCounter = allTrades.filter(t => t.query).length + 1;
+
+            const processedTrades = tradesData.map((trade, index) => {
+                const isEquity = trade.hasOwnProperty('symbol') || trade.hasOwnProperty('ticker') || trade.hasOwnProperty('instrument') || trade.hasOwnProperty('securityequityname') || trade.hasOwnProperty('stock') || trade.hasOwnProperty('isin');
+                const baseId = trade.tradeid || trade.executionid || `T${Date.now() + index}`;
+                
+                let simulatedData = simulateTradeData(baseId, isEquity, trade, queryCounter, allTrades.length + index);
+                if(simulatedData.query) queryCounter++;
+
+                return {
+                    ...simulatedData.tradeValidation,
+                    lifecycleEvents: simulatedData.lifecycle,
+                    reconciliation: simulatedData.reconciliation,
+                    dealReview: simulatedData.dealReview,
+                    query: simulatedData.query,
+                    // Add TradeValue for dashboard calculations
+                    TradeValue: isEquity ? (parseFloat(trade.quantity) || 0) * (parseFloat(trade.price) || parseFloat(trade.pricepershare) || 0) : (parseFloat(trade.value) || (Math.random() * 100000)),
+                };
+            });
+
+            allTrades = allTrades.concat(processedTrades);
+            
+            updateDashboard();
+            renderAllTables();
+            showView('trade-validation');
+        }
+
+
+        function simulateTradeData(baseId, isEquity, trade, queryCounter, index) {
+             const validationStatuses = ['Validated', 'Failed', 'Pending'];
+             const validationStatus = validationStatuses[Math.floor(Math.random() * 3)];
+             const kycStatus = Math.random() > 0.3 ? 'Verified' : 'Pending';
+
+             const quantity = parseFloat(trade.quantity) || 0;
+             const price = parseFloat(trade.price) || parseFloat(trade.pricepershare) || 0;
+             const value = quantity * price;
+
+             let tradeValidationData = {
+                TradeType: isEquity ? 'Equity' : 'Forex',
+                TradeID: baseId,
+                ClientID: trade.clientid || `C${100 + index}`,
+                OrderID: trade.orderid || `O${5000 + index}`,
+                TradeDate: trade.tradedate || new Date(new Date() - Math.random()*10*24*60*60*1000).toISOString().split('T')[0],
+                SettlementDate: trade.settlementdate || new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                KYCStatus: kycStatus,
+                ValidationStatus: validationStatus,
+                ...(isEquity ? {
+                    Symbol: trade.symbol || trade.ticker || trade.instrument || `FTSE 100`,
+                    CompanyName: trade.companyname || trade['securityequityname'] || `Teal Investments Limited`,
+                    BuySell: trade.buysell || (Math.random() > 0.5 ? 'Buy' : 'Sell'),
+                    ISIN: trade.isin || `NX${Math.random().toString().slice(2, 11)}`,
+                    Quantity: quantity,
+                    Price: price,
+                    Value: value.toFixed(2),
+                    Currency: trade.currency || 'GBP',
+                    Counterparty: trade.counterparty || trade['issuercounterparty'] || 'Barclays Bank PLC',
+                    TraderName: trade['fotraderid'] || 'John Doe',
+                    Notes: ''
+                } : {
+                    CurrencyPair: trade.currencypair || 'GBPUSD',
+                    RegulatoryReportingStatus: Math.random() > 0.5 ? 'Reported' : 'Pending',
+                    DealtCurrency: (trade.currencypair || 'GBPUSD').substring(0,3),
+                    TermCurrency: (trade.currencypair || 'GBPUSD').substring(3,6),
+                    ProductType: trade.instrumenttype || trade.producttype || 'Spot',
+                    ExchangeRate: trade.exchangerate || (1 + Math.random() * 0.2).toFixed(4),
+                    Value: (value || (Math.random() * 100000)).toFixed(2),
+                    Counterparty: trade.counterparty || 'HSBC',
+                    Notes: ''
+                })
+             };
+             if (!tradeValidationData.Value) {
+                tradeValidationData.Value = (Math.random() * 100000).toFixed(2);
+             }
+
+             const eventTypes = ['Early Redemptions', 'Coupon Payment', 'Maturity', 'Barrier Monitoring'];
+             const eventStatuses = ['Pending', 'Processed', 'Failed'];
+             let lifecycleData = Array.from({ length: Math.ceil(Math.random() * 2) }, (_, i) => ({
+                 EventType: eventTypes[Math.floor(Math.random() * eventTypes.length)],
+                 EventDate: new Date(new Date(tradeValidationData.TradeDate).getTime() + (i + 1) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                 EventStatus: eventStatuses[Math.floor(Math.random() * eventStatuses.length)],
+             }));
+
+            const reconStatuses = ['Matched', 'Break'];
+            const reconStatus = validationStatus === 'Validated' ? 'Matched' : reconStatuses[Math.floor(Math.random() * reconStatuses.length)];
+            const breakTypes = ['Internal', 'External'];
+            let reconciliationData = {
+                InternalValue: tradeValidationData.Value,
+                ExternalValue: reconStatus === 'Matched' ? tradeValidationData.Value : (tradeValidationData.Value * (0.9 + Math.random() * 0.2)).toFixed(2),
+                MatchStatus: reconStatus,
+                BreakType: reconStatus === 'Break' ? breakTypes[Math.floor(Math.random() * breakTypes.length)] : 'N/A',
+                Comments: ''
+            };
+
+            const reviewStatuses = ['Approved', 'Pending', 'Rejected'];
+            let dealReviewData = {
+                ClientID: tradeValidationData.ClientID,
+                OrderID: tradeValidationData.OrderID,
+                DocumentVerified: 'Termsheet',
+                ReviewStatus: validationStatus === 'Validated' ? 'Approved' : reviewStatuses[Math.floor(Math.random() * reviewStatuses.length)],
+                ComplianceFlag: Math.random() > 0.9 ? 'Raised' : 'Clear',
+                Notes: ''
+            };
+
+            let queryData = null;
+            if (validationStatus === 'Failed' || reconciliationData.MatchStatus === 'Break' || dealReviewData.ComplianceFlag === 'Raised') {
+                const querySources = ['Validation', 'Reconciliation', 'Deal Review'];
+                const assignedDepts = ['Network Management', 'Regulatory Adherance'];
+                queryData = {
+                    QueryID: `Q${1000 + queryCounter}`,
+                    Source: querySources[Math.floor(Math.random() * querySources.length)],
+                    Description: 'Discrepancy found, please investigate.',
+                    AssignedDept: assignedDepts[Math.floor(Math.random() * assignedDepts.length)],
+                    Status: 'Open',
+                };
+            }
+             
+             return { 
+                 tradeValidation: tradeValidationData, 
+                 lifecycle: lifecycleData,
+                 reconciliation: reconciliationData,
+                 dealReview: dealReviewData,
+                 query: queryData,
+             };
+        }
+        
+        // --- Rendering Engine ---
+        function renderAllTables() {
+            createFilters();
+            sortAndRender('tradeValidation');
+            sortAndRender('tradeLifecycle');
+            sortAndRender('reconciliation');
+            sortAndRender('consolidated-data'); // Add consolidated data rendering
+        }
+
+        // Patch: Set default filter values for lifecycle on load and when switching
+        function setDefaultLifecycleFilters() {
+            const instrumentSelect = document.getElementById('tl-instrument-filter');
+            const eventTypeSelect = document.getElementById('tl-event-type-filter');
+            if (instrumentSelect) instrumentSelect.value = 'Equity';
+            if (eventTypeSelect) eventTypeSelect.value = 'Maturity';
+        }
+
+        const originalShowView = showView;
+        window.showView = function(viewId) {
+            // Remove active class from all views
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Remove active class from all sidebar navigation items
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            
+            // Add active class to the clicked navigation item
+            let activeNavItem = document.querySelector(`#sidebar nav a[onclick*="${viewId}"]`);
+            
+            // Special handling for trade-validation view
+            if (viewId === 'trade-validation' && !activeNavItem) {
+                activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+            }
+            
+            if (activeNavItem) {
+                activeNavItem.classList.add('sidebar-nav-active');
+            }
+            
+            const title = viewId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            // document.getElementById('view-title').textContent = title; // Element doesn't exist
+            renderAllTables(); // Re-render tables when view changes
+            
+        if (viewId === 'lifecycle-events') {
+        setTimeout(setDefaultLifecycleFilters, 0); // Wait for filters to render
+        setTimeout(renderAllTables, 10); // Re-render after setting defaults
+         }
+        };
+
+        function createFilters() {
+             const instrumentTypes = ['Equity', 'Forex'];
+             const validationStatuses = ['Validated', 'Failed', 'Pending'];
+             const eventTypes = ['Early Redemptions', 'Coupon Payment', 'Maturity', 'Barrier Monitoring'];
+             const eventStatuses = ['Pending', 'Processed', 'Failed'];
+             const matchStatuses = ['Matched', 'Break'];
+             // Removed reviewStatuses and queryStatuses as they are no longer needed for filters
+
+             const filterConfigs = {
+                'tv-filters': [
+                    {id: 'tv-search', placeholder: 'Search Trade/Client ID...'},
+                    {id: 'tv-instrument-filter', label: 'Instrument', options: instrumentTypes},
+                    {id: 'tv-validation-filter', label: 'Validation Status', options: validationStatuses},
+                ],
+                'tl-filters': [
+                    {id: 'tl-search', placeholder: 'Search Trade ID...'},
+                    {id: 'tl-instrument-filter', label: 'Instrument', options: instrumentTypes},
+                    {id: 'tl-event-type-filter', label: 'Event Type', options: eventTypes},
+                    {id: 'tl-event-status-filter', label: 'Event Status', options: eventStatuses},
+                ],
+                'rc-filters': [
+                    {id: 'rc-search', placeholder: 'Search Trade ID...'},
+                    {id: 'rc-instrument-filter', label: 'Instrument', options: ['Equity', 'Forex']},
+                    {id: 'rc-reportedto-filter', label: 'Reported to', options: ['All Reported tos', 'IBMO', 'TCU', 'Front Office', 'LCM']},
+                ],
+                // Removed dr-filters and qm-filters
+             };
+             
+             for (const containerId in filterConfigs) {
+                 const container = document.getElementById(containerId);
+                 // Only create filters if they don't already exist to prevent duplicates
+                 if (container && container.children.length === 0) {
+                     filterConfigs[containerId].forEach(filter => {
+                         if (filter.placeholder) { 
+                             container.innerHTML += `<input type="text" id="${filter.id}" class="border rounded px-2 py-1 text-sm" placeholder="${filter.placeholder}" onkeyup="renderAllTables()">`;
+                         } else { 
+                             const optionsLabel = filter.label.endsWith('s') ? `${filter.label}es` : `${filter.label}s`;
+                            let optionsHtml = '';
+                            // Only add 'All' option for non-lifecycle filters
+                            if (!(containerId === 'tl-filters' && (filter.id === 'tl-instrument-filter' || filter.id === 'tl-event-type-filter'))) {
+                                optionsHtml += `<option value="">All ${optionsLabel}</option>`;
+                            }
+                             filter.options.forEach(opt => optionsHtml += `<option value="${opt}">${opt}</option>`);
+                            // For lifecycle filters, call fetchAndRenderTradeLifecycle() on change
+                            if (containerId === 'tl-filters' && (filter.id === 'tl-instrument-filter' || filter.id === 'tl-event-type-filter')) {
+                                container.innerHTML += `<select id="${filter.id}" class="border rounded px-2 py-1 text-sm" onchange="fetchAndRenderTradeLifecycle()">${optionsHtml}</select>`;
+                            } else {
+                             container.innerHTML += `<select id="${filter.id}" class="border rounded px-2 py-1 text-sm" onchange="renderAllTables()">${optionsHtml}</select>`;
+                            }
+                         }
+                     });
+                 }
+            }
+            // Set default for lifecycle filters: Equity + Maturity
+            const tlInstrument = document.getElementById('tl-instrument-filter');
+            const tlEventType = document.getElementById('tl-event-type-filter');
+            if (tlInstrument) tlInstrument.value = 'Equity';
+            if (tlEventType) tlEventType.value = 'Maturity';
+        }
+
+        function getFilteredData(viewName) {
+            let data = [];
+            let filters = {};
+
+            switch (viewName) {
+                case 'tradeValidation':
+                    data = allTrades;
+                    filters.search = document.getElementById('tv-search')?.value.toLowerCase() || '';
+                    filters.instrument = document.getElementById('tv-instrument-filter')?.value || '';
+                    filters.validation = document.getElementById('tv-validation-filter')?.value || '';
+                    
+                    return data.filter(trade => 
+                        (!filters.search || trade.TradeID.toLowerCase().includes(filters.search) || trade.ClientID.toLowerCase().includes(filters.search) || (trade.Symbol && trade.Symbol.toLowerCase().includes(filters.search)) || (trade.CurrencyPair && trade.CurrencyPair.toLowerCase().includes(filters.search))) &&
+                        (!filters.instrument || trade.TradeType === filters.instrument) &&
+                        (!filters.validation || trade.ValidationStatus === filters.validation)
+                    );
+                
+                case 'tradeLifecycle':
+                    data = allTrades.flatMap(trade => (trade.lifecycleEvents || []).map(event => ({ ...event, TradeID: trade.TradeID, TradeType: trade.TradeType, SymbolOrPair: trade.TradeType === 'Equity' ? trade.Symbol : trade.CurrencyPair })));
+                    filters.search = document.getElementById('tl-search')?.value.toLowerCase() || '';
+                    filters.instrument = document.getElementById('tl-instrument-filter')?.value || '';
+                    filters.eventType = document.getElementById('tl-event-type-filter')?.value || '';
+                    filters.eventStatus = document.getElementById('tl-event-status-filter')?.value || '';
+
+                    return data.filter(event => 
+                        (!filters.search || event.TradeID.toLowerCase().includes(filters.search) || (event.SymbolOrPair && event.SymbolOrPair.toLowerCase().includes(filters.search))) &&
+                        (!filters.instrument || event.TradeType === filters.instrument) &&
+                        (!filters.eventType || event.EventType === filters.eventType) &&
+                        (!filters.eventStatus || event.EventStatus === filters.eventStatus)
+                    );
+
+                 case 'reconciliation':
+                    data = allTrades.map(trade => ({ ...trade.reconciliation, TradeID: trade.TradeID, TradeType: trade.TradeType }));
+                    filters.search = document.getElementById('rc-search')?.value.toLowerCase() || '';
+                    filters.instrument = document.getElementById('rc-instrument-filter')?.value || '';
+                    filters.matchStatus = document.getElementById('rc-match-status-filter')?.value || '';
+
+                    return data.filter(item => 
+                        (!filters.search || item.TradeID.toLowerCase().includes(filters.search)) &&
+                        (!filters.instrument || item.TradeType === filters.instrument) &&
+                        (!filters.matchStatus || item.MatchStatus === filters.matchStatus)
+                    );
+
+                case 'consolidated-data':
+                    data = allTrades.map(trade => ({
+                        TradeID: trade.TradeID,
+                        ClientID: trade.ClientID,
+                        Currency: trade.Currency,
+                        TradeDate: trade.TradeDate,
+                        KYCStatus: trade.KYCStatus,
+                        ValidationStatus: trade.ValidationStatus,
+                        BuySell: trade.BuySell,
+                        NotionalAmount: trade.Value, // Assuming Value is the NotionalAmount for consolidated view
+                        FXRate: trade.ExchangeRate,
+                        SettlementDate: trade.SettlementDate,
+                        ApprovalStatus: trade.ApprovalStatus,
+                        InternalValue: trade.reconciliation?.InternalValue ?? '',
+                        ExternalValue: trade.reconciliation?.ExternalValue ?? '',
+                        ReportedTo: trade.reconciliation?.ReportedTo ?? '',
+                        Reason: trade.reconciliation?.Reason ?? '',
+                        TradeType: trade.TradeType,
+                        Symbol: trade.Symbol,
+                        CurrencyPair: trade.CurrencyPair,
+                        Value: trade.Value,
+                        ExchangeRate: trade.ExchangeRate,
+                        Notes: trade.Notes,
+                        lifecycleEvents: trade.lifecycleEvents,
+                        reconciliation: trade.reconciliation,
+                        dealReview: trade.dealReview,
+                        query: trade.query
+                    }));
+                    filters.search = document.getElementById('consolidated-search')?.value.toLowerCase() || '';
+                    filters.clientId = document.getElementById('consolidated-client-filter')?.value || '';
+                    filters.currency = document.getElementById('consolidated-currency-filter')?.value || '';
+                    filters.tradeDate = document.getElementById('consolidated-trade-date-filter')?.value || '';
+                    filters.kycStatus = document.getElementById('consolidated-kyc-status-filter')?.value || '';
+                    filters.validationStatus = document.getElementById('consolidated-validation-status-filter')?.value || '';
+                    filters.buySell = document.getElementById('consolidated-buy-sell-filter')?.value || '';
+                    filters.notionalAmount = document.getElementById('consolidated-notional-amount-filter')?.value || '';
+                    filters.fxRate = document.getElementById('consolidated-fx-rate-filter')?.value || '';
+                    filters.settlementDate = document.getElementById('consolidated-settlement-date-filter')?.value || '';
+                    filters.approvalStatus = document.getElementById('consolidated-approval-status-filter')?.value || '';
+                    filters.internalValue = document.getElementById('consolidated-internal-value-filter')?.value || '';
+                    filters.externalValue = document.getElementById('consolidated-external-value-filter')?.value || '';
+                    filters.reportedTo = document.getElementById('consolidated-reported-to-filter')?.value || '';
+                    filters.reason = document.getElementById('consolidated-reason-filter')?.value || '';
+
+                    return data.filter(item => 
+                        (!filters.search || item.TradeID.toLowerCase().includes(filters.search) || item.ClientID.toLowerCase().includes(filters.search)) &&
+                        (!filters.clientId || item.ClientID.toLowerCase().includes(filters.clientId.toLowerCase())) &&
+                        (!filters.currency || item.Currency.toLowerCase().includes(filters.currency.toLowerCase())) &&
+                        (!filters.tradeDate || item.TradeDate.toLowerCase().includes(filters.tradeDate.toLowerCase())) &&
+                        (!filters.kycStatus || item.KYCStatus.toLowerCase().includes(filters.kycStatus.toLowerCase())) &&
+                        (!filters.validationStatus || item.ValidationStatus.toLowerCase().includes(filters.validationStatus.toLowerCase())) &&
+                        (!filters.buySell || item.BuySell.toLowerCase().includes(filters.buySell.toLowerCase())) &&
+                        (!filters.notionalAmount || item.NotionalAmount.toString().includes(filters.notionalAmount)) &&
+                        (!filters.fxRate || item.FXRate.toString().includes(filters.fxRate)) &&
+                        (!filters.settlementDate || item.SettlementDate.toLowerCase().includes(filters.settlementDate.toLowerCase())) &&
+                        (!filters.approvalStatus || item.ApprovalStatus.toLowerCase().includes(filters.approvalStatus.toLowerCase())) &&
+                        (!filters.internalValue || item.InternalValue.toString().includes(filters.internalValue)) &&
+                        (!filters.externalValue || item.ExternalValue.toString().includes(filters.externalValue)) &&
+                        (!filters.reportedTo || item.ReportedTo.toLowerCase().includes(filters.reportedTo.toLowerCase())) &&
+                        (!filters.reason || item.Reason.toLowerCase().includes(filters.reason.toLowerCase()))
+                    );
+                // Removed dealReview and queryManagement cases
+                default:
+                    return [];
+            }
+        }
+
+        function sortAndRender(viewName) {
+            let data = getFilteredData(viewName);
+
+            if (sortState.view === viewName && sortState.column) {
+                data.sort((a, b) => {
+                    let valA = a[sortState.column] || '';
+                    let valB = b[sortState.column] || '';
+                    if (!isNaN(parseFloat(valA)) && !isNaN(parseFloat(valB)) && isFinite(valA) && isFinite(valB)) {
+                        return sortState.direction === 'asc' ? valA - valB : valB - valA;
+                    }
+                    return sortState.direction === 'asc' ? (valA.toString().localeCompare(valB.toString())) : (valB.toString().localeCompare(valA.toString()));
+                });
+            }
+             
+            switch(viewName) {
+                case 'tradeValidation': renderTradeValidation(data); break;
+                case 'tradeLifecycle': renderTradeLifecycle(data); break;
+                case 'reconciliation': renderReconciliation(data); break;
+                case 'consolidated-data': renderConsolidatedData(data); break; // Add consolidated data rendering
+                // Removed dealReview and queryManagement render calls
+            }
+        }
+        
+        function sortData(view, column) {
+            const currentDirection = (sortState.view === view && sortState.column === column) ? sortState.direction : 'desc';
+            sortState = { view, column, direction: currentDirection === 'desc' ? 'asc' : 'desc' };
+            renderAllTables();
+        }
+
+        function renderTradeValidation(tradesToRender) {
+            const tbody = document.getElementById('trade-validation-body');
+            if (!tbody) return; // Ensure tbody exists
+            tbody.innerHTML = '';
+            
+            tradesToRender.forEach(trade => {
+                const kycInfo = trade.TradeType === 'Forex' 
+                    ? `KYC: ${trade.KYCStatus} <br> Reg: ${trade.RegulatoryReportingStatus}`
+                    : `KYC: ${trade.KYCStatus}`;
+
+                const statusColors = { Validated: 'bg-green-100 text-green-800', Failed: 'bg-red-100 text-red-800', Pending: 'bg-yellow-100 text-yellow-800' };
+                
+                const symbolDisplay = trade.TradeType === 'Equity' ? `${trade.Symbol} / ${trade.Currency}` : trade.CurrencyPair;
+
+                const mainRow = document.createElement('tr');
+                mainRow.className = 'border-t border-gray-200';
+                mainRow.innerHTML = `
+                    <td class="px-4 py-2">${trade.TradeID}</td>
+                    <td class="px-4 py-2">${trade.ClientID}</td>
+                    <td class="px-4 py-2">${symbolDisplay}</td>
+                    <td class="px-4 py-2">${trade.TradeDate}</td>
+                    <td class="px-4 py-2 text-xs">${kycInfo}</td>
+                    <td class="px-4 py-2"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[trade.ValidationStatus]}">${trade.ValidationStatus}</span></td>
+                    <td class="px-4 py-2"><!-- JS will fill this with getAssignedDepartment(trade) --></td>
+                    <td class="px-4 py-2"><button class="text-xs font-bold py-1 px-2 rounded" style="background-color: #00AEEF; color: white; border: none;" onclick="viewTermsheet('${trade.TradeID}')">View Termsheet</button></td>
+                `;
+                tbody.appendChild(mainRow);
+            });
+        }
+        
+        // --- Dynamic Trade Lifecycle Table ---
+        function renderTradeLifecycle(dataToRender) {
+            console.log('renderTradeLifecycle called');
+            const tbody = document.getElementById('lifecycle-events-body');
+            if (!tbody) {
+                console.log('tbody not found');
+                return;
+            }
+            tbody.innerHTML = '';
+            const thead = tbody.parentElement.querySelector('thead');
+            if (thead) thead.innerHTML = '';
+            
+            // Ensure the table has the lifecycle-table class
+            const table = tbody.parentElement;
+            console.log('Table element:', table);
+            console.log('Table tagName:', table?.tagName);
+            console.log('Table className before:', table?.className);
+            if (table && table.tagName === 'TABLE') {
+                table.className = 'lifecycle-table w-full text-sm text-center';
+                console.log('Table className after:', table.className);
+            }
+
+            // Read current filter selections
+            const instrument = document.getElementById('tl-instrument-filter')?.value || 'Equity';
+            const eventType = document.getElementById('tl-event-type-filter')?.value || 'Early Redemptions';
+
+            // Define columns for each combination
+            let columns = [];
+            let getRow = (item) => [];
+            if (instrument === 'Equity' && eventType === 'Early Redemptions') {
+                columns = ['Trade ID','Symbol','Trade Type','Quantity','Price','Trade Value','Trade Date','Observation Dates','Auto-call level','Check'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.Symbol,
+                    item.TradeType,
+                    item.Quantity,
+                    item.Price,
+                    item.Value,
+                    item.TradeDate,
+                    item.ObservationDates || '-',
+                    item.AutoCallLevel || '-',
+                    '<input type="checkbox">'
+                ];
+            } else if (instrument === 'Equity' && eventType === 'Barrier Monitoring') {
+                columns = ['Trade ID','Symbol','Trade Type','Quantity','Price','Trade Value','Trade Date'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.Symbol,
+                    item.TradeType,
+                    item.Quantity,
+                    item.Price,
+                    item.Value,
+                    item.TradeDate
+                ];
+            } else if (instrument === 'Equity' && eventType === 'Coupon Payment') {
+                columns = ['Trade ID','Symbol','Trade Type','Quantity','Price','Trade Value','Trade Date','Coupon Paid','Coupon Details'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.Symbol,
+                    item.TradeType,
+                    item.Quantity,
+                    item.Price,
+                    item.Value,
+                    item.TradeDate,
+                    item.CouponPaid || '-',
+                    item.CouponDetails || '-'
+                ];
+            } else if (instrument === 'Equity' && eventType === 'Maturity') {
+                columns = ['Trade ID','Symbol','Trade Type','Quantity','Price','Trade Value','Maturity Date','Approval Status','Maturity Details'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.Symbol,
+                    item.TradeType,
+                    item.Quantity,
+                    item.Price,
+                    item.Value !== undefined ? item.Value : (item.TradeValue !== undefined ? item.TradeValue : '-'),
+                    item.MaturityDate || item.SettlementDate || '-',
+                    item.ApprovalStatus || '-',
+                    `<button class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded" onclick="showMaturityDetailsPopup('Equity', '${item.TradeID}')">View</button>`
+                ];
+            } else if (instrument === 'Forex' && eventType === 'Maturity') {
+                columns = ['TradeID','TradeDate','CurrencyPair','BuySell','NotionalAmount','FXRate','SettlementDate','Approval Status','Maturity Details'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.TradeDate,
+                    item.CurrencyPair,
+                    item.BuySell || '-',
+                    item.NotionalAmount || item.Value || '-',
+                    item.FXRate || item.ExchangeRate || '-',
+                    item.SettlementDate || '-',
+                    item.ApprovalStatus || '-',
+                    `<button class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded" onclick="showMaturityDetailsPopup('Forex', '${item.TradeID}')">View</button>`
+                ];
+            } else {
+                columns = ['Trade ID','Event Type','Event Date','Event Status','Actions'];
+                getRow = (item) => [
+                    item.TradeID,
+                    item.EventType,
+                    item.EventDate,
+                    item.EventStatus,
+                    'N/A'
+                ];
+            }
+
+            // Render header
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.className = 'px-4 py-2 text-center';
+                th.textContent = col;
+                console.log('Created th with className:', th.className);
+                headerRow.appendChild(th);
+            });
+            if (thead) thead.appendChild(headerRow);
+
+            // Deduplicate by TradeID + TradeType
+            const seen = new Set();
+            const deduped = [];
+            for (const t of dataToRender) {
+                const key = (t.TradeID || '') + '|' + (t.TradeType || '');
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    deduped.push(t);
+                }
+            }
+            dataToRender = deduped;
+
+            // Render rows
+            dataToRender.forEach(item => {
+                // Only show events matching the selected eventType (for Equity)
+                if (instrument === 'Equity' && eventType && item.EventType && item.EventType !== eventType) return;
+                if (instrument === 'Forex' && item.TradeType !== 'Forex') return;
+                const row = document.createElement('tr');
+                row.className = 'border-t border-gray-200';
+                const cells = getRow(item);
+                cells.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.className = 'px-4 py-2 text-center';
+                    td.innerHTML = cell;
+                    console.log('Created td with className:', td.className);
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+        }
+        
+        function renderReconciliation(dataToRender) {
+            const tbody = document.getElementById('reconciliation-body');
+            if (!tbody) return; // Ensure tbody exists
+            tbody.innerHTML = '';
+            const thead = tbody.parentElement.querySelector('thead');
+            if (thead) {
+                thead.innerHTML = '';
+                const headerRow = document.createElement('tr');
+                [
+                    'TRADE ID',
+                    'INTERNAL VALUE',
+                    'EXTERNAL VALUE',
+                    'REPORTED TO',
+                    'REASON',
+                    'ACTIONS'
+                ].forEach(col => {
+                    const th = document.createElement('th');
+                    th.className = 'px-4 py-2';
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+            }
+            dataToRender.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-t border-gray-200';
+                row.innerHTML = `
+                    <td class="px-4 py-2">${item.TradeID || '-'}</td>
+                    <td class="px-4 py-2">${item.InternalValue !== undefined ? item.InternalValue : '-'}</td>
+                    <td class="px-4 py-2">${item.ExternalValue !== undefined ? item.ExternalValue : '-'}</td>
+                    <td class="px-4 py-2">${item.ReportedTo || '-'}</td>
+                    <td class="px-4 py-2">${item.Reason || '-'}</td>
+                    <td class="px-4 py-2">${item.Actions || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Removed renderDealReview and renderQueryManagement functions
+
+        function renderConsolidatedData(dataToRender) {
+            const tbody = document.getElementById('consolidated-data-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const thead = tbody.parentElement.querySelector('thead');
+            if (thead) thead.innerHTML = '';
+
+            // Define columns for consolidated data
+            const columns = [
+                'Trade ID',
+                'Trader ID',
+                'Currency',
+                'Trade Date',
+                'KYC Status',
+                'Validation Status',
+                'BuySell',
+                'NotionalAmount',
+                'FXRate',
+                'SettlementDate',
+                'Approval Status',
+                'INTERNAL VALUE',
+                'EXTERNAL VALUE',
+                'REPORTEDTO',
+                'REASON'
+            ];
+
+            // Render header
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.className = 'px-4 py-2';
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+            if (thead) thead.appendChild(headerRow);
+
+            // Render rows
+            dataToRender.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-t border-gray-200';
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.className = 'px-4 py-2';
+                    let value = item[col.toLowerCase().replace(/\s/g, '-')];
+                    if (value === undefined) value = '-'; // Default to '-' if value is undefined
+                    if (col === 'BuySell' || col === 'Approval Status' || col === 'ReportedTo' || col === 'Reason') {
+                        value = value.replace(/"/g, '').replace(/'/g, ''); // Remove quotes for JSON
+                    }
+                    td.textContent = value;
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+        }
+
+
+        // --- Update & Utility Functions ---
+        function updateDashboard() {
+            document.getElementById('total-trades').textContent = allTrades.length;
+            const lifecyclePending = allTrades.flatMap(t => t.lifecycleEvents).filter(e => e.EventStatus === 'Pending').length;
+            document.getElementById('lifecycle-pending').textContent = lifecyclePending;
+            const breaks = allTrades.filter(t => t.reconciliation.MatchStatus === 'Break').length;
+            document.getElementById('breaks').textContent = breaks;
+            // The openQueries KPI remains, but its data source is now implicitly from allTrades.query
+            const openQueries = allTrades.filter(t => t.query && t.query.Status === 'Open').length;
+            document.getElementById('open-queries').textContent = openQueries;
+        }
+
+        function processLifecycleEvent(tradeId, eventDate) {
+            const trade = allTrades.find(t => t.TradeID === tradeId);
+            if(trade) {
+                const event = trade.lifecycleEvents.find(e => e.EventDate === eventDate);
+                if (event) {
+                    event.EventStatus = 'Processed';
+                    renderAllTables();
+                    updateDashboard();
+                    openModal('Event Processed', `Lifecycle event for Trade ID ${tradeId} on ${eventDate} has been processed.`);
+                } else {
+                    openModal('Error', `No pending event found for Trade ID ${tradeId} on ${eventDate}.`);
+                }
+            }
+        }
+        
+        function updateNote(tradeId, note) {
+            const trade = allTrades.find(t => t.TradeID === tradeId);
+            if(trade) {
+                trade.Notes = note;
+                console.log(`Note updated for ${tradeId}: ${note}`);
+            }
+        }
+
+        // --- Modal & Termsheet Logic ---
+        function openModal(title, body) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('generic-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('generic-modal').classList.remove('active');
+        }
+        
+        function viewTermsheet(tradeId) {
+            const trade = allTrades.find(t => t.TradeID === tradeId);
+            if (!trade) return;
+
+            const title = `Termsheet - ${tradeId}`;
+            const body = trade.TradeType === 'Equity' 
+                ? generateStructuredProductTermsheetHTML(trade) 
+                : generateFxTermsheetHTML(trade);
+            
+            openModal(title, body);
+        }
+
+        function buildTermsheetRow(number, label, value, itemClass = '') {
+            return `
+                <div class="termsheet-item ${itemClass}">
+                    <div class="item-col-1">${number}</div>
+                    <div class="item-col-2">${label}</div>
+                    <div class="item-col-3">${value}</div>
+                </div>
+            `;
+        }
+        
+        function generateStructuredProductTermsheetHTML(trade) {
+             const nominalAmount = `${trade.Currency} ${Number(trade.Value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+             let html = `<div class="termsheet-container">`;
+             // Header
+             html += `
+                <div class="termsheet-header">
+                    <div class="termsheet-title">PART A-CONTRACTUAL TERMS (EQUITY)</div>
+                    <div class="termsheet-isin">${trade.ISIN}</div>
+                </div>
+             `;
+             // Body with sequential numbering
+             html += buildTermsheetRow('1.', '(a) Series number:', '1');
+             html += buildTermsheetRow('', '(b) Tranche number:', '1', 'sub-item');
+             html += buildTermsheetRow('2.', 'Currency:', `${trade.Currency}`);
+             html += buildTermsheetRow('3.', 'Securities:', '');
+             html += buildTermsheetRow('', '(a) Aggregate Nominal Amount as at the Issue Date:', '', 'sub-item');
+             html += buildTermsheetRow('', '(i) Tranche:', nominalAmount, 'double-sub-item');
+             html += buildTermsheetRow('', '(ii) Series:', nominalAmount, 'double-sub-item');
+             html += buildTermsheetRow('', '(b) Specified Denomination:', `${trade.Currency} 1`, 'sub-item');
+             html += buildTermsheetRow('', '(c) Minimum Tradable Amount:', 'N/A', 'sub-item');
+             html += buildTermsheetRow('', '(d) Calculation Amount:', `${trade.Currency} 1`, 'sub-item');
+             html += buildTermsheetRow('4.', 'Issue Price:', '100% of par.');
+             html += buildTermsheetRow('5.', 'Issue Date:', trade.TradeDate);
+             html += buildTermsheetRow('6.', 'Scheduled Redemption Date:', trade.SettlementDate);
+             html += buildTermsheetRow('7.', 'Preference Share linked Securities:', '');
+             html += buildTermsheetRow('', '(a) Underlying Preference Share:', `1 Preference Share linked to the ${trade.Symbol} issued by ${trade.CompanyName}`, 'sub-item');
+             html += buildTermsheetRow('8.', 'Trade Date:', trade.TradeDate);
+             html += buildTermsheetRow('9.', 'Form of Securities:', 'Global Bearer Securities: Permanent Global Security');
+             html += buildTermsheetRow('10.', 'Determination Agent:', trade.Counterparty);
+             html += buildTermsheetRow('11.', 'Registrar:', 'The Bank of New York Mellon SA/NV, Luxembourg Branch');
+             html += buildTermsheetRow('12.', '(a) Name of Manager', trade.Counterparty);
+             
+             // Remarks section
+             html += buildTermsheetRow('13.', 'Remarks:', `<textarea class="w-full border rounded mt-1 p-1 text-black bg-white font-normal" rows="3" onchange="updateNote('${trade.TradeID}', this.value)">${trade.Notes || ''}</textarea>`);
+
+             // Footer
+             html += `<div class="termsheet-footer">This termsheet is a simulation. The Issuer has determined that the Securities should not be subject to US withholding tax under Section 871(m).</div>`
+
+             html += `</div>`;
+             return html;
+        }
+
+        function generateFxTermsheetHTML(trade) {
+             const dealtAmount = Number(trade.Value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+             const termAmount = (Number(trade.Value) * Number(trade.ExchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+             let html = `<div class="termsheet-container">`;
+             // Header
+             html += `
+                <div class="termsheet-header">
+                    <div class="termsheet-title">PART A-CONTRACTUAL TERMS (FOREX)</div>
+                    <div class="termsheet-isin">${trade.TradeID}</div>
+                </div>
+             `;
+             // Body
+             html += buildTermsheetRow('1.', 'Transaction Type:', 'Foreign Exchange');
+             html += buildTermsheetRow('2.', 'Counterparty / Client:', trade.ClientID);
+             html += buildTermsheetRow('3.', 'Trade Date:', trade.TradeDate);
+             html += buildTermsheetRow('4.', 'Settlement Date (Value Date):', trade.SettlementDate);
+             html += buildTermsheetRow('5.', 'Product Type:', trade.ProductType);
+             html += buildTermsheetRow('6.', 'Currency Pair:', trade.CurrencyPair);
+             html += buildTermsheetRow('7.', 'Exchange Rate:', trade.ExchangeRate);
+             html += buildTermsheetRow('8.', 'Trade Economics:', '');
+             html += buildTermsheetRow('', `(a) ${trade.DealtCurrency} Amount:`, `${trade.DealtCurrency} ${dealtAmount}`, 'sub-item');
+             html += buildTermsheetRow('', `(b) ${trade.TermCurrency} Amount:`, `${trade.TermCurrency} ${termAmount}`, 'sub-item');
+             html += buildTermsheetRow('9.', 'Determination Agent:', trade.Counterparty);
+             
+             // Remarks section
+             html += buildTermsheetRow('10.', 'Remarks:', `<textarea class="w-full border rounded mt-1 p-1 text-black bg-white font-normal" rows="3" onchange="updateNote('${trade.TradeID}', this.value)">${trade.Notes || ''}</textarea>`);
+             
+             html += `</div>`;
+             return html;
+        }
+
+        // --- Dashboard Modal Functions (New) ---
+        const THEME = {
+            primary: '#4a90e2',
+            success: '#2a9d8f',
+            danger: '#e63946',
+            accent: '#f7b731',
+            textPrimary: '#2c3e50',
+            textSecondary: '#8492a6',
+        };
+
+        function getStatusColor(status) {
+            const s = String(status).toLowerCase();
+            if (s.includes('fail') || s.includes('break') || s.includes('disputed') || s.includes('open') || s === 'rejected') return THEME.danger;
+            if (s.includes('pending') || s.includes('in progress')) return THEME.accent;
+            if (s.includes('pass') || s.includes('valid') || s.includes('confirm') || s.includes('settled') || s.includes('closed') || s.includes('approved') || s.includes('processed') || s === 'matched' || s === 'clear') return THEME.primary;
+            return THEME.textSecondary;
+        }
+
+        function calculateKpis() {
+            const totalValue = allTrades.reduce((sum, trade) => sum + (parseFloat(trade.TradeValue) || 0), 0);
+            const validationRate = (allTrades.filter(t => t.ValidationStatus === 'Validated' || t.ValidationStatus === 'Passed').length / (allTrades.length || 1)) * 100;
+            const reconBreaks = allTrades.filter(t => ['Break', 'Disputed', 'Failed'].includes(t.reconciliation.MatchStatus)).length;
+            const openQueries = allTrades.filter(t => t.query && t.query.Status === 'Open').length;
+
+            return {
+                totalTrades: allTrades.length,
+                totalValue: totalValue,
+                validationRate: validationRate,
+                reconBreaks: reconBreaks,
+                openQueries: openQueries
+            };
+        }
+
+        function generateBarChartHtml(data, title, valueKey, labelKey) {
+            if (data.length === 0) return `<p class="text-gray-500 text-center">No data available for this chart.</p>`;
+            
+            // Sort data for better visualization
+            const sortedData = [...data].sort((a, b) => b[valueKey] - a[valueKey]);
+            
+            const maxValue = Math.max(...sortedData.map(d => d[valueKey]));
+            let chartHtml = `
+                <h4 class="font-semibold text-md text-center mb-4">${title}</h4>
+                <div class="flex flex-col space-y-2 p-2">
+            `;
+            sortedData.forEach(item => {
+                const barWidth = (item[valueKey] / maxValue) * 95; // Max 95% width for bars
+                chartHtml += `
+                    <div class="flex items-center">
+                        <div class="w-1/4 text-right pr-2 text-sm text-gray-700 truncate">${item[labelKey]}</div>
+                        <div class="w-3/4 bg-gray-200 rounded-full h-6 relative">
+                            <div class="h-full rounded-full flex items-center justify-end pr-2 text-white text-xs font-bold" 
+                                style="width: ${barWidth}%; background-color: ${THEME.primaryDark};">
+                                ${item[valueKey].toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            chartHtml += `</div>`;
+            return chartHtml;
+        }
+
+        function generateSimplePieChartHtml(data, title) {
+            if (data.length === 0 || data.every(d => d.value === 0)) return `<p class="text-gray-500 text-center">No data available for this chart.</p>`;
+
+            const total = data.reduce((sum, entry) => sum + entry.value, 0);
+            if (total === 0) return `<p class="text-gray-500 text-center">No data available for this chart.</p>`;
+
+            let currentAngle = 0;
+            let paths = '';
+            let legendItems = '';
+            const radius = 40; // Smaller radius for better fit
+            const innerRadius = 25; // For donut chart
+            const centerX = 50;
+            const centerY = 50;
+
+            // Unique ID for the text element in this specific pie chart
+            const textId = `pie-hover-text-${title.replace(/\s+/g, '-')}`;
+
+            data.forEach((entry, index) => {
+                const percentage = (entry.value / total);
+                const angle = percentage * 360;
+                const color = getStatusColor(entry.name);
+
+                // Start point of the inner arc
+                const x1Inner = centerX + innerRadius * Math.sin(Math.PI * 2 * (currentAngle / 360));
+                const y1Inner = centerY - innerRadius * Math.cos(Math.PI * 2 * (currentAngle / 360));
+                
+                // Start point of the outer arc
+                const x1Outer = centerX + radius * Math.sin(Math.PI * 2 * (currentAngle / 360));
+                const y1Outer = centerY - radius * Math.cos(Math.PI * 2 * (currentAngle / 360));
+                
+                currentAngle += angle;
+                
+                // End point of the inner arc
+                const x2Inner = centerX + innerRadius * Math.sin(Math.PI * 2 * (currentAngle / 360));
+                const y2Inner = centerY - innerRadius * Math.cos(Math.PI * 2 * (currentAngle / 360));
+
+                // End point of the outer arc
+                const x2Outer = centerX + radius * Math.sin(Math.PI * 2 * (currentAngle / 360));
+                const y2Outer = centerY - radius * Math.cos(Math.PI * 2 * (currentAngle / 360));
+
+                const largeArcFlag = angle > 180 ? 1 : 0;
+
+                // Path for the donut slice
+                // M x1Outer,y1Outer L x1Inner,y1Inner A innerRadius,innerRadius 0 largeArcFlag,1 x2Inner,y2Inner L x2Outer,y2Outer A radius,radius 0 largeArcFlag,0 x1Outer,y1Outer Z
+                paths += `
+                    <path d="M${x1Outer},${y1Outer} L${x1Inner},${y1Inner} A${innerRadius},${innerRadius} 0 ${largeArcFlag},1 ${x2Inner},${y2Inner} L${x2Outer},${y2Outer} A${radius},${radius} 0 ${largeArcFlag},0 ${x1Outer},${y1Outer} Z" 
+                        fill="${color}" 
+                        onmouseover="showPieSliceInfo(event, '${entry.name}', ${entry.value}, ${(percentage * 100).toFixed(0)}, '${textId}')"
+                        onmouseout="hidePieSliceInfo('${textId}')"
+                    />
+                `;
+
+                // Legend item with percentage
+                legendItems += `
+                    <div class="flex items-center text-sm">
+                        <span class="inline-block w-3 h-3 rounded-full mr-2" style="background-color: ${color};"></span>
+                        <span>${entry.name} (${(percentage * 100).toFixed(0)}%)</span>
+                    </div>
+                `;
+            });
+
+            return `
+                <h4 class="font-semibold text-md text-center mb-4">${title}</h4>
+                <div class="flex flex-col items-center">
+                    <svg width="150" height="150" viewBox="0 0 100 100" class="mb-4">
+                        ${paths}
+                        <text id="${textId}" x="50" y="50" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${THEME.textPrimary}" font-weight="bold"></text>
+                    </svg>
+                    <div class="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                        ${legendItems}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Functions to handle hover on pie chart slices
+        function showPieSliceInfo(event, name, value, percentage, textElementId) {
+            const textElement = document.getElementById(textElementId);
+            if (textElement) {
+                textElement.textContent = `${value} (${percentage}%)`;
+            }
+        }
+
+        function hidePieSliceInfo(textElementId) {
+            const textElement = document.getElementById(textElementId);
+            if (textElement) {
+                textElement.textContent = ''; // Clear the text
+            }
+        }
+
+
+        function showDashboardModal(kpiType) {
+            const kpis = calculateKpis();
+            let modalTitle = '';
+            let modalBody = '';
+
+            switch (kpiType) {
+                case 'totalTrades':
+                    modalTitle = 'Overall Trade Metrics';
+                    modalBody = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h3 class="text-lg font-semibold text-gray-700">Total Trade Volume</h3>
+                                <p class="text-3xl font-bold text-blue-600" id="modal-total-trades">Loading...</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h3 class="text-lg font-semibold text-gray-700">Total Trade Value</h3>
+                                <p class="text-3xl font-bold text-blue-600" id="modal-total-value">Loading...</p>
+                            </div>
+                        </div>`;
+                    break;
+                case 'lifecycleEvents':
+                    modalTitle = 'Trade Validation & Lifecycle Overview';
+                    modalBody = `<div class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6"><h3 class="text-lg font-semibold text-gray-700">Validation Pass Rate</h3><p class="text-3xl font-bold text-green-600">N/A</p></div>`;
+                    break;
+                case 'reconciliationBreaks':
+                    modalTitle = 'Reconciliation Status Overview';
+                    modalBody = `<div class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6"><h3 class="text-lg font-semibold text-gray-700">Total Reconciliation Breaks</h3><p class="text-3xl font-bold text-red-600">N/A</p></div>`;
+                    break;
+                default:
+                    modalTitle = 'Information';
+                    modalBody = '<p>No specific data available for this section.</p>';
+            }
+            openModal(modalTitle, modalBody);
+        }
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Debug: DOMContentLoaded event fired');
+            showView('overview');
+            
+            // Set Overview as the default active navigation item
+            const overviewNavItem = document.querySelector('#sidebar nav a[onclick*="overview"]');
+            if (overviewNavItem) {
+                overviewNavItem.classList.add('sidebar-nav-active');
+                console.log('Set default active class to Overview');
+            } else {
+                console.log('Overview navigation item not found');
+            }
+            
+            if (window.updateTradeCountFromBackend) window.updateTradeCountFromBackend();
+            renderAllTables(); 
+            fetchAndRenderReconciliation();
+            // Load overview stats on page load
+            console.log('Debug: About to call loadOverviewStatsOnPageLoad');
+            console.log('Debug: loadOverviewStatsOnPageLoad exists:', typeof window.loadOverviewStatsOnPageLoad);
+            if (window.loadOverviewStatsOnPageLoad) {
+                console.log('Debug: Calling loadOverviewStatsOnPageLoad');
+                window.loadOverviewStatsOnPageLoad();
+            } else {
+                console.log('Debug: loadOverviewStatsOnPageLoad function not found');
+            }
+            // If landing on lifecycle, set defaults
+            if (document.getElementById('lifecycle-events').classList.contains('active')) {
+                setTimeout(setDefaultLifecycleFilters, 0);
+                setTimeout(renderAllTables, 10);
+            }
+        });
+
+        // Add this function to fetch and render real Trade Lifecycle data
+        // Store the last fetched lifecycle data globally
+        window.lastLifecycleData = [];
+
+        async function fetchAndRenderTradeLifecycle() {
+            try {
+                // Get the current event type from the filter, default to 'Maturity'
+                const eventType = document.getElementById('tl-event-type-filter')?.value || 'Maturity';
+                // Encode spaces and dashes for URL
+                const encodedEventType = encodeURIComponent(eventType);
+                const response = await fetch(`${TRADE_LIFECYCLE_API_BASE}/api/event/${encodedEventType}`);
+                if (!response.ok) throw new Error('Failed to fetch lifecycle events');
+                const lifecycleData = await response.json();
+                window.lastLifecycleData = lifecycleData; // Save for popup lookup
+                renderTradeLifecycle(lifecycleData);
+            } catch (err) {
+                alert('Failed to load lifecycle events: ' + err.message);
+                console.error('Error fetching lifecycle events:', err);
+            }
+        }
+
+        // Patch showView to fetch real data when showing lifecycle-events
+        window.showView = function(viewId) {
+            // Remove active class from all views
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Remove active class from all sidebar navigation items
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            
+            // Add active class to the clicked navigation item
+            let activeNavItem = document.querySelector(`#sidebar nav a[onclick*="${viewId}"]`);
+            
+            // Special handling for trade-validation view
+            if (viewId === 'trade-validation' && !activeNavItem) {
+                activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+            }
+            
+            if (activeNavItem) {
+                activeNavItem.classList.add('sidebar-nav-active');
+                console.log('Added active class to:', activeNavItem.textContent);
+            } else {
+                console.log('No navigation item found for viewId:', viewId);
+            }
+            
+            const title = viewId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            // document.getElementById('view-title').textContent = title; // Element doesn't exist
+            renderAllTables(); // Re-render tables when view changes
+            
+            if (viewId === 'lifecycle-events') {
+                fetchAndRenderTradeLifecycle();
+            }
+        };
+
+        // Add popup logic for Maturity Details
+        // Robust popup logic for Maturity Details
+        window.showMaturityDetailsPopup = function(type, tradeId) {
+            const data = window.lastLifecycleData || [];
+            // Try to match TradeID and TradeType (case-insensitive, string compare)
+            let item = data.find(t => String(t.TradeID).toLowerCase() === String(tradeId).toLowerCase() && (type === 'Equity' ? (String(t.TradeType).toLowerCase() === 'equity') : (String(t.TradeType).toLowerCase() === 'forex')));
+            // If not found, try matching just TradeID
+            if (!item) {
+                item = data.find(t => String(t.TradeID).toLowerCase() === String(tradeId).toLowerCase());
+            }
+            if (!item) {
+                // Log all TradeIDs for debugging
+                console.warn('Trade not found for popup. TradeID:', tradeId, 'Available:', data.map(t => t.TradeID));
+                openModal('Maturity Details', '<div>Trade not found.</div>');
+                return;
+            }
+            let html = '';
+            let isApproved = (item.ApprovalStatus && String(item.ApprovalStatus).toLowerCase() === 'approved');
+            let today = new Date();
+            let dateStr = '';
+            let isToday = false;
+            if (type === 'Equity') {
+                dateStr = item.MaturityDate || item.SettlementDate || '';
+            } else if (type === 'Forex') {
+                dateStr = item.SettlementDate || '';
+            }
+            // Normalize dateStr to yyyy-mm-dd (UTC)
+            let tradeDate = '';
+            if (dateStr) {
+                // Accept both YYYY-MM-DD and YYYY/MM/DD
+                let d = new Date(dateStr.replace(/-/g, '/'));
+                if (!isNaN(d)) {
+                    // Get UTC yyyy-mm-dd
+                    tradeDate = d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+                }
+            }
+            let todayUTC = new Date();
+            let todayStr = todayUTC.getUTCFullYear() + '-' + String(todayUTC.getUTCMonth()+1).padStart(2,'0') + '-' + String(todayUTC.getUTCDate()).padStart(2,'0');
+            isToday = (tradeDate === todayStr);
+            // Debug log
+            console.log('Popup Approve button check:', {tradeDate, todayStr, raw: dateStr});
+            if (type === 'Equity') {
+                html = `<div><strong>Trade ID:</strong> ${item.TradeID || '-'}<br>
+                         <strong>Symbol:</strong> ${item.Symbol || '-'}<br>
+                         <strong>Trade Value:</strong> ${item.Value !== undefined ? item.Value : (item.TradeValue !== undefined ? item.TradeValue : '-') }<br>
+                         <strong>Maturity Date:</strong> ${item.MaturityDate || item.SettlementDate || '-'}</div>`;
+            } else if (type === 'Forex') {
+                html = `<div><strong>Trade ID:</strong> ${item.TradeID || '-'}<br>
+                         <strong>Currency Pair:</strong> ${item.CurrencyPair || '-'}<br>
+                         <strong>Notional Value:</strong> ${item.NotionalAmount || item.Value || '-'}<br>
+                         <strong>Settlement Date:</strong> ${item.SettlementDate || '-'}</div>`;
+            }
+            // Approve button logic
+            if (isApproved) {
+                html += `<div class='mt-4 text-green-600 font-bold'>Approved!</div>`;
+            } else if (isToday) {
+                html += `<div class='mt-4'><button id='approve-maturity-btn' class='bg-green-500 hover:bg-green-700 text-white text-xs font-bold py-1 px-4 rounded'>Approve</button></div>`;
+            } else {
+                html += `<div class='mt-4'><button class='bg-gray-400 text-white text-xs font-bold py-1 px-4 rounded cursor-not-allowed' disabled>Approve</button><span class='ml-2 text-gray-500 text-xs'>(Can only approve on maturity/settlement date)</span></div>`;
+            }
+            openModal('Maturity Details', html);
+            // Approve button handler
+            setTimeout(() => {
+                const btn = document.getElementById('approve-maturity-btn');
+                if (btn) {
+                    btn.onclick = async function() {
+                        // Update ApprovalStatus in window.lastLifecycleData
+                        let idx = data.findIndex(t => String(t.TradeID).toLowerCase() === String(tradeId).toLowerCase());
+                        if (idx !== -1) {
+                            data[idx].ApprovalStatus = 'Approved';
+                            window.lastLifecycleData = data;
+                            // Persist to backend
+                            await fetch(`${TRADE_LIFECYCLE_API_BASE}/api/event/approve`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ TradeID: item.TradeID, TradeType: type })
+                            });
+                            // Re-render the table
+                            renderTradeLifecycle(data);
+                            // Show Approved! message in popup
+                            openModal('Maturity Details', html + `<div class='mt-4 text-green-600 font-bold'>Approved!</div>`);
+                        }
+                    };
+                }
+            }, 0);
+        }
+
+        async function fetchAndRenderReconciliation() {
+            const instrument = document.getElementById('rc-instrument-filter')?.value || 'Equity';
+            if (instrument === 'Equity') {
+                try {
+                    const response = await fetch(`${TRADE_LIFECYCLE_API_BASE}/api/reconciliation/equity`);
+                    if (!response.ok) throw new Error('Failed to fetch reconciliation data');
+                    const data = await response.json();
+                    renderReconciliation(data);
+                } catch (err) {
+                    renderReconciliation([]);
+                }
+            } else {
+                // For now, clear the table for Forex or show a placeholder
+                renderReconciliation([]);
+            }
+        }
+
+        // --- Reconciliation Upload and Toggle Logic ---
+        // Functions are now defined in the inline script above
+
+        // Duplicate loadReconciliationTables function removed - now handled by ui.js functions
+
+        async function fetchAndRenderFOFOTable() {
+            try {
+                // Get current instrument type
+                const instrumentToggle = document.getElementById('instrument-toggle');
+                const instrumentType = instrumentToggle.value;
+                
+                // Don't fetch data if no instrument type is selected
+                if (!instrumentType) {
+                    const tbody = document.getElementById('fofo-table-body');
+                    if (tbody) tbody.innerHTML = '';
+                    return;
+                }
+                
+                // Fetch all data from fx_systemA_capture (for Trade IDs and System A column)
+                const systemAData = await fetchFromFirebaseCollection('fx_systemA_capture');
+                // Fetch all data from fx_systemB_capture (for System B column)
+                const systemBData = await fetchFromFirebaseCollection('fx_systemB_capture');
+                
+                const tbody = document.getElementById('fofo-table-body');
+                if (!tbody) {
+                    console.error('FOFO table body not found');
+                    return;
+                }
+                tbody.innerHTML = '';
+                
+                // Create a map of Trade ID to System B data
+                const systemBMap = new Map();
+                systemBData.forEach(item => {
+                    systemBMap.set(item['Trade ID'], item);
+                });
+                
+                // Helper to check instrument type by Trade ID
+                function isInstrumentType(tradeId, type) {
+                    if (!tradeId) return false;
+                    if (type === 'forex') return tradeId.startsWith('FX');
+                    if (type === 'equity') return tradeId.startsWith('TID');
+                    return false;
+                }
+                
+                // Render rows for each Trade ID in systemAData, filtered by instrument type
+                systemAData.forEach(systemAItem => {
+                    const tradeId = systemAItem['Trade ID'];
+                    if (!isInstrumentType(tradeId, instrumentType)) return;
+                    const systemBItem = systemBMap.get(tradeId);
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'border-t border-gray-200';
+                    
+                    const systemAValue = systemAItem ? `${systemAItem['Price'] || '-'} (${systemAItem['Instrument'] || '-'})` : '-';
+                    const systemBValue = systemBItem ? `${systemBItem['Price'] || '-'} (${systemBItem['Instrument'] || '-'})` : '-';
+                    
+                    row.innerHTML = `
+                        <td class="px-2 py-1">${tradeId || '-'}</td>
+                        <td class="px-2 py-1">${systemAValue}</td>
+                        <td class="px-2 py-1">${systemBValue}</td>
+                        <td class="px-2 py-1"></td>
+                        <td class="px-2 py-1"></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error fetching FOFO data:', err);
+                const tbody = document.getElementById('fofo-table-body');
+                if (tbody) tbody.innerHTML = '';
+            }
+        }
+        
+        async function fetchAndRenderFOBOTable() {
+            try {
+                // Get current instrument type
+                const instrumentToggle = document.getElementById('instrument-toggle');
+                const instrumentType = instrumentToggle.value;
+                
+                // Don't fetch data if no instrument type is selected
+                if (!instrumentType) {
+                    const tbody = document.getElementById('fobo-table-body');
+                    if (tbody) tbody.innerHTML = '';
+                    return;
+                }
+                
+                // Fetch all data from fx_FOentry_capture (for Trade IDs and Front Office column)
+                const foData = await fetchFromFirebaseCollection('fx_FOentry_capture');
+                // Fetch all data from fx_BOentry_capture (for Back Office column)
+                const boData = await fetchFromFirebaseCollection('fx_BOentry_capture');
+                
+                const tbody = document.getElementById('fobo-table-body');
+                if (!tbody) {
+                    console.error('FOBO table body not found');
+                    return;
+                }
+                tbody.innerHTML = '';
+                
+                // Create a map of Trade ID to Back Office data
+                const boMap = new Map();
+                boData.forEach(item => {
+                    boMap.set(item['Trade ID'], item);
+                });
+                
+                // Helper to check instrument type by Trade ID
+                function isInstrumentType(tradeId, type) {
+                    if (!tradeId) return false;
+                    if (type === 'forex') return tradeId.startsWith('FX');
+                    if (type === 'equity') return tradeId.startsWith('TID');
+                    return false;
+                }
+                
+                // Render rows for each Trade ID in foData, filtered by instrument type
+                foData.forEach(foItem => {
+                    const tradeId = foItem['Trade ID'];
+                    if (!isInstrumentType(tradeId, instrumentType)) return;
+                    const boItem = boMap.get(tradeId);
+                    
+                    const foValue = foItem ? `${foItem['Price'] || '-'} (${foItem['Instrument'] || '-'})` : '-';
+                    const boValue = boItem ? `${boItem['Price'] || '-'} (${boItem['Instrument'] || '-'})` : '-';
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'border-t border-gray-200';
+                    row.innerHTML = `
+                        <td class="px-2 py-1">${tradeId || '-'}</td>
+                        <td class="px-2 py-1">${foValue}</td>
+                        <td class="px-2 py-1">${boValue}</td>
+                        <td class="px-2 py-1"></td>
+                        <td class="px-2 py-1"></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error fetching FOBO data:', err);
+                const tbody = document.getElementById('fobo-table-body');
+                if (tbody) tbody.innerHTML = '';
+            }
+        }
+
+        async function fetchFromFirebaseCollection(collectionName, instrumentType = null) {
+            try {
+                // Initialize Firebase if not already done
+                if (!window.firebase) {
+                    console.error('Firebase not initialized');
+                    return [];
+                }
+                
+                const db = firebase.firestore();
+                let snapshot;
+                
+                // Removed direct Firestore filtering by 'Instrument' field
+                snapshot = await db.collection(collectionName).get();
+                
+                const data = [];
+                snapshot.forEach(doc => {
+                    data.push(doc.data());
+                });
+                
+                return data;
+                
+            } catch (err) {
+                console.error(`Error fetching from Firebase collection ${collectionName}:`, err);
+                return [];
+            }
+        }
+
+        // Initialize reconciliation tables when the view is shown
+        window.showView = function(viewId) {
+            // Remove active class from all views
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Remove active class from all sidebar navigation items
+            document.querySelectorAll('#sidebar nav a').forEach(navItem => {
+                navItem.classList.remove('sidebar-nav-active');
+            });
+            
+            // Add active class to the clicked navigation item
+            let activeNavItem = document.querySelector(`#sidebar nav a[onclick*="${viewId}"]`);
+            
+            // Special handling for trade-validation view
+            if (viewId === 'trade-validation' && !activeNavItem) {
+                activeNavItem = document.querySelector('#sidebar nav a[onclick*="loadAndShowTradeValidation"]');
+            }
+            
+            if (activeNavItem) {
+                activeNavItem.classList.add('sidebar-nav-active');
+                console.log('Added active class to:', activeNavItem.textContent);
+            } else {
+                console.log('No navigation item found for viewId:', viewId);
+            }
+            
+            const title = viewId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            // document.getElementById('view-title').textContent = title; // Element doesn't exist
+            renderAllTables(); // Re-render tables when view changes
+            
+            if (viewId === 'lifecycle-events') {
+                fetchAndRenderTradeLifecycle();
+            }
+            if (viewId === 'reconciliation') {
+                // loadReconciliationTables call removed - now handled by ui.js functions
+            }
+        };
+
+        // Helper function to get action statement based on mismatch type and reconciliation type
+        function getActionStatement(field, reconciliationType) {
+            if (reconciliationType === 'FO-FO') {
+                switch(field) {
+                    case 'fxrate':
+                        return 'Confirm correct FX rate from execution logs and align both FO systems.';
+                    case 'notionalamount':
+                        return 'Verify trade notional. Contact support if unclear or trade is disputed.';
+                    case 'buy/sell':
+                        return 'Validate trade direction; correct side or mail trader for confirmation.';
+                    case 'instrument':
+                        return 'Check currency pair mapping. Contact ops team if unclear.';
+                    case 'producttype':
+                        return 'Review product classification; mail booking desk if mismatch persists.';
+                    default:
+                        return 'Review discrepancy and take appropriate action.';
+                }
+            } else if (reconciliationType === 'FO-BO') {
+                switch(field) {
+                    case 'settlementdate':
+                        return 'Confirm market convention (e.g., T+1) and update system. Contact BO team if needed.';
+                    case 'fxrate':
+                        return 'Verify applied FX rate. Escalate via email if BO and FO differ persistently.';
+                    case 'buy/sell':
+                        return 'Cross-check trade side. Contact trade owner if discrepancy remains.';
+                    case 'instrument':
+                        return 'Validate FX pair legs; escalate to booking support if mismatched.';
+                    case 'producttype':
+                        return 'Recheck trade type. Notify risk team if classification seems invalid.';
+                    case 'notionalamount':
+                        return 'Confirm deal size from trade capture. Contact settlements team if mismatch unresolved.';
+                    default:
+                        return 'Review discrepancy and take appropriate action.';
+                }
+            }
+            return 'Review discrepancy and take appropriate action.';
+        }
+
+        // Close popup when clicking outside of it
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('title-popup-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeTitlePopup();
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Title Popup Modal -->
+    <div id="title-popup-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center">
+        <div class="relative mx-auto p-5 border shadow-lg rounded-md bg-white" style="width: 500px; max-width: 500px; min-width: 500px;">
+            <div class="text-left">
+                <div class="flex justify-between items-center pb-3">
+                    <h3 class="text-xl leading-6 font-medium text-gray-900">Page Information</h3>
+                    <div class="cursor-pointer z-50" onclick="closeTitlePopup()">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
+                    </div>
+                </div>
+                <div id="title-popup-content" class="mt-2 text-sm text-gray-500" style="word-wrap: break-word; overflow-wrap: break-word;">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

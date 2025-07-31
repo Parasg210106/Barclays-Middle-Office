@@ -1,0 +1,18 @@
+{
+  "format_rules": {
+    "Trade ID": "string",
+    "Trade Date": "date",
+    "Settlement Date": "date",
+    "Quantity": "int",
+    "Price": "float",
+    "Trade Value": "float",
+    "Commission": "float",
+    "Taxes": "float",
+    "Total Cost": "float",
+    "ISIN": "isin",
+    "KYC Status": ["Complete", "Incomplete"],
+    "Reference Data Validated": ["Yes", "No"],
+    "Settlement Status": ["Pending", "Completed", "Failed"],
+    "Trade Type": ["Buy", "Sell"]
+  }
+} 

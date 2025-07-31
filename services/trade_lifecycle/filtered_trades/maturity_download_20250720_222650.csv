@@ -1,0 +1,51 @@
+Trade ID,Order ID,Client ID,ISIN,Symbol,Trade Type,Quantity,Price,Trade Value,Currency,Maturity Date,Trade Date,Counterparty,Trader Name,KYC Status,Reference Data Validated,Collateral Required,Margin Type,Coupon rate,Coupon schedule,Observation Dates,Auto-call level,Margin Status,event_type,Approved,Approval Status,Coupon Rate,Final Amount
+TID00004,OID00004,CID4233,US918886777,NFLX,Sell,528,722.5,381480.0,USD,18/07/2025,04/04/2025,Citibank,Trader B,Pending,No,19074.0,Variation,,,,,Pending,Maturity,True,Approved,,381480.0
+TID00008,OID00008,CID7079,US951500830,NVDA,Sell,730,1335.37,974820.1,EUR,22/05/2026,02/11/2024,JPMorgan,Trader A,Pending,Yes,48741.01,Variation,,,,,Failed,Maturity,True,Approved,,974820.1
+TID00012,OID00012,CID5493,US138859211,BABA,Sell,859,1354.3,1163343.7,EUR,03/12/2026,25/03/2025,Citibank,Trader A,Completed,No,58167.18,Variation,,,,,Pending,Maturity,True,Approved,,1163343.7
+TID00016,OID00016,CID3859,US613556217,AAPL,Sell,353,1071.12,378105.36,GBP,02/08/2026,25/04/2025,Morgan Stanley,Trader B,Completed,Yes,18905.27,Initial,,,,,Pending,Maturity,False,Not Approved,,378105.36
+TID00020,OID00020,CID2179,US377248184,TSLA,Buy,724,784.03,567637.72,EUR,19/09/2026,25/10/2024,Citibank,Trader C,Pending,No,28381.89,Variation,,,,,Pending,Maturity,False,Not Approved,,567637.72
+TID00024,OID00024,CID1575,US431561710,TSLA,Sell,471,1405.76,662112.96,GBP,12/04/2026,05/11/2024,Citibank,Trader C,Failed,Yes,33105.65,Variation,,,,,Pending,Maturity,False,Not Approved,,662112.96
+TID00028,OID00028,CID8625,US470601172,ADBE,Sell,439,968.95,425369.05,GBP,11/07/2026,13/01/2025,Citibank,Trader B,Completed,Yes,21268.45,Variation,,,,,Pending,Maturity,False,Not Approved,,425369.05
+TID00032,OID00032,CID9833,US511362334,NFLX,Buy,803,1392.03,1117800.09,GBP,11/11/2026,24/02/2025,JPMorgan,Trader C,Completed,No,55890.0,Variation,,,,,Satisfied,Maturity,False,Not Approved,,1117800.09
+TID00036,OID00036,CID8148,US696783507,TSLA,Buy,524,598.92,313834.08,USD,20/11/2026,28/04/2025,Goldman Sachs,Trader D,Failed,No,15691.7,Variation,,,,,Pending,Maturity,False,Not Approved,,313834.08
+TID00040,OID00040,CID4309,US504829074,BABA,Buy,228,309.17,70490.76,USD,16/11/2026,17/02/2025,Goldman Sachs,Trader C,Completed,No,3524.54,Variation,,,,,Failed,Maturity,False,Not Approved,,70490.76
+TID00044,OID00044,CID7067,US590523117,MSFT,Sell,815,474.82,386978.3,EUR,25/11/2025,07/10/2024,JPMorgan,Trader C,Completed,No,19348.92,Initial,,,,,Satisfied,Maturity,False,Not Approved,,386978.3
+TID00048,OID00048,CID5807,US463417877,AAPL,Sell,975,1438.69,1402722.75,GBP,19/07/2026,28/11/2024,JPMorgan,Trader B,Failed,No,70136.14,Initial,,,,,Pending,Maturity,False,Not Approved,,1402722.75
+TID00052,OID00052,CID8422,US631021383,NFLX,Buy,390,1051.69,410159.1,USD,07/10/2026,01/07/2025,Goldman Sachs,Trader C,Completed,Yes,20507.96,Variation,,,,,Pending,Maturity,False,Not Approved,,410159.1
+TID00056,OID00056,CID3084,US552352193,META,Sell,773,262.34,202788.82,EUR,14/08/2026,28/11/2024,Morgan Stanley,Trader B,Failed,No,10139.44,Variation,,,,,Failed,Maturity,False,Not Approved,,202788.82
+TID00060,OID00060,CID9195,US688143018,AAPL,Sell,719,1308.69,940948.11,USD,06/09/2025,27/11/2024,Goldman Sachs,Trader C,Failed,Yes,47047.41,Initial,,,,,Satisfied,Maturity,False,Not Approved,,940948.11
+TID00064,OID00064,CID4183,US758753118,MSFT,Sell,710,835.16,592963.6,EUR,28/11/2025,31/01/2025,Goldman Sachs,Trader D,Completed,Yes,29648.18,Variation,,,,,Satisfied,Maturity,False,Not Approved,,592963.6
+TID00068,OID00068,CID5248,US504953604,AMZN,Buy,378,1115.53,421670.34,EUR,03/03/2026,28/03/2025,JPMorgan,Trader A,Pending,No,21083.52,Initial,,,,,Pending,Maturity,False,Not Approved,,421670.34
+TID00072,OID00072,CID9866,US386930876,AAPL,Buy,518,622.86,322641.48,GBP,26/02/2026,08/05/2025,Citibank,Trader B,Completed,No,16132.07,Initial,,,,,Satisfied,Maturity,False,Not Approved,,322641.48
+TID00076,OID00076,CID8651,US985881696,AAPL,Sell,924,620.21,573074.04,USD,20/06/2026,28/10/2024,JPMorgan,Trader B,Pending,Yes,28653.7,Initial,,,,,Satisfied,Maturity,True,Approved,,573074.04
+TID00080,OID00080,CID5309,US653564485,NVDA,Sell,147,409.74,60231.78,GBP,23/04/2026,12/04/2025,Goldman Sachs,Trader B,Failed,Yes,3011.59,Variation,,,,,Failed,Maturity,False,Not Approved,,60231.78
+TID00084,OID00084,CID6307,US705231901,AAPL,Buy,49,1040.21,50970.29,GBP,30/04/2026,23/12/2024,JPMorgan,Trader C,Pending,Yes,2548.51,Variation,,,,,Pending,Maturity,False,Not Approved,,50970.29
+TID00088,OID00088,CID6831,US697627951,AMZN,Buy,350,1259.25,440737.5,EUR,20/01/2026,29/04/2025,Morgan Stanley,Trader A,Failed,Yes,22036.88,Initial,,,,,Satisfied,Maturity,False,Not Approved,,440737.5
+TID00092,OID00092,CID1821,US913440508,ADBE,Buy,434,986.09,427963.06,EUR,24/11/2025,05/04/2025,Goldman Sachs,Trader D,Completed,Yes,21398.15,Initial,,,,,Satisfied,Maturity,False,Not Approved,,427963.06
+TID00096,OID00096,CID3007,US594201452,ADBE,Buy,159,816.02,129747.18,USD,04/10/2026,01/03/2025,Goldman Sachs,Trader C,Pending,No,6487.36,Initial,,,,,Failed,Maturity,False,Not Approved,,129747.18
+TID00100,OID00100,CID2481,US620657212,NVDA,Sell,377,244.94,92342.38,USD,22/11/2026,27/12/2024,Morgan Stanley,Trader C,Pending,No,4617.12,Variation,,,,,Failed,Maturity,False,Not Approved,,92342.38
+TID00104,OID00104,CID9246,US817729491,NVDA,Sell,179,772.25,138232.75,EUR,28/10/2025,02/06/2025,Morgan Stanley,Trader B,Completed,Yes,6911.64,Initial,,,,,Failed,Maturity,False,Not Approved,,138232.75
+TID00108,OID00108,CID2116,US321741526,NVDA,Buy,241,1343.78,323850.98,EUR,07/08/2025,09/02/2025,JPMorgan,Trader B,Failed,Yes,16192.55,Variation,,,,,Pending,Maturity,False,Not Approved,,323850.98
+TID00112,OID00112,CID5064,US985144661,BABA,Buy,368,1084.32,399029.76,GBP,18/01/2026,11/06/2025,Goldman Sachs,Trader C,Completed,Yes,19951.49,Initial,,,,,Satisfied,Maturity,False,Not Approved,,399029.76
+TID00116,OID00116,CID6707,US598667764,NVDA,Buy,86,1308.42,112524.12,EUR,31/10/2026,28/06/2025,JPMorgan,Trader A,Pending,No,5626.21,Initial,,,,,Failed,Maturity,False,Not Approved,,112524.12
+TID00120,OID00120,CID8424,US331487828,META,Sell,271,116.36,31533.56,EUR,10/12/2026,12/04/2025,Morgan Stanley,Trader A,Failed,No,1576.68,Initial,,,,,Satisfied,Maturity,False,Not Approved,,31533.56
+TID00124,OID00124,CID4378,US484725127,AAPL,Sell,345,1364.9,470890.5,GBP,18/01/2026,13/06/2025,Citibank,Trader C,Pending,No,23544.53,Initial,,,,,Pending,Maturity,False,Not Approved,,470890.5
+TID00128,OID00128,CID8346,US954087449,NVDA,Buy,985,103.03,101484.55,EUR,23/04/2026,04/01/2025,Morgan Stanley,Trader B,Failed,Yes,5074.23,Variation,,,,,Satisfied,Maturity,False,Not Approved,,101484.55
+TID00132,OID00132,CID1734,US724779138,NFLX,Buy,913,1260.69,1151009.97,EUR,15/08/2025,09/12/2024,Citibank,Trader B,Failed,No,57550.5,Initial,,,,,Pending,Maturity,False,Not Approved,,1151009.97
+TID00136,OID00136,CID5490,US758662104,NVDA,Sell,757,966.07,731314.99,EUR,28/11/2025,07/06/2025,Citibank,Trader A,Failed,No,36565.75,Variation,,,,,Failed,Maturity,False,Not Approved,,731314.99
+TID00140,OID00140,CID5716,US504363090,TSLA,Buy,375,457.03,171386.25,EUR,25/11/2025,08/06/2025,Citibank,Trader D,Failed,Yes,8569.31,Initial,,,,,Failed,Maturity,False,Not Approved,,171386.25
+TID00144,OID00144,CID9711,US287699055,META,Sell,697,1227.4,855497.8,USD,07/11/2025,06/02/2025,Goldman Sachs,Trader C,Failed,Yes,42774.89,Initial,,,,,Satisfied,Maturity,False,Not Approved,,855497.8
+TID00148,OID00148,CID6283,US525451313,BABA,Buy,541,242.87,131392.67,EUR,26/11/2026,18/04/2025,JPMorgan,Trader A,Completed,No,6569.63,Initial,,,,,Pending,Maturity,False,Not Approved,,131392.67
+TID00152,OID00152,CID5143,US816001450,AAPL,Sell,154,1457.65,224478.1,EUR,29/12/2026,01/01/2025,Goldman Sachs,Trader C,Pending,Yes,11223.91,Initial,,,,,Failed,Maturity,False,Not Approved,,224478.1
+TID00156,OID00156,CID9458,US380365808,BABA,Sell,416,1030.95,428875.2,GBP,16/10/2025,11/07/2025,Morgan Stanley,Trader A,Completed,No,21443.76,Initial,,,,,Satisfied,Maturity,False,Not Approved,,428875.2
+TID00160,OID00160,CID9392,US239128843,TSLA,Buy,162,373.99,60586.38,GBP,21/12/2026,15/01/2025,Goldman Sachs,Trader D,Completed,No,3029.32,Initial,,,,,Failed,Maturity,False,Not Approved,,60586.38
+TID00164,OID00164,CID6699,US473404630,NFLX,Buy,544,285.23,155165.12,USD,14/10/2025,10/05/2025,Morgan Stanley,Trader C,Pending,Yes,7758.26,Initial,,,,,Satisfied,Maturity,False,Not Approved,,155165.12
+TID00168,OID00168,CID9385,US421725107,AMZN,Buy,863,461.06,397894.78,GBP,18/12/2025,06/10/2024,Goldman Sachs,Trader B,Pending,No,19894.74,Initial,,,,,Failed,Maturity,False,Not Approved,,397894.78
+TID00172,OID00172,CID1816,US782184971,NVDA,Buy,149,712.97,106232.53,EUR,30/01/2026,27/10/2024,Morgan Stanley,Trader B,Pending,Yes,5311.63,Variation,,,,,Failed,Maturity,False,Not Approved,,106232.53
+TID00176,OID00176,CID3741,US168111475,AAPL,Buy,456,695.14,316983.84,USD,08/12/2026,19/01/2025,Morgan Stanley,Trader B,Completed,No,15849.19,Initial,,,,,Failed,Maturity,False,Not Approved,,316983.84
+TID00180,OID00180,CID5952,US501620010,TSLA,Sell,941,1274.75,1199539.75,USD,23/09/2026,03/10/2024,Citibank,Trader A,Pending,Yes,59976.99,Initial,,,,,Satisfied,Maturity,False,Not Approved,,1199539.75
+TID00184,OID00184,CID4902,US938699428,NFLX,Buy,566,632.2,357825.2,USD,01/02/2026,20/04/2025,Morgan Stanley,Trader D,Pending,No,17891.26,Variation,,,,,Failed,Maturity,False,Not Approved,,357825.2
+TID00188,OID00188,CID9332,US383601522,AMZN,Buy,823,750.2,617414.6,GBP,23/09/2025,15/03/2025,Citibank,Trader D,Pending,No,30870.73,Initial,,,,,Failed,Maturity,False,Not Approved,,617414.6
+TID00192,OID00192,CID7150,US710788171,META,Sell,635,492.5,312737.5,GBP,06/10/2026,18/11/2024,JPMorgan,Trader C,Pending,No,15636.88,Initial,,,,,Satisfied,Maturity,False,Not Approved,,312737.5
+TID00196,OID00196,CID6949,US912788835,AAPL,Buy,221,253.05,55924.05,USD,17/06/2026,09/10/2024,Citibank,Trader B,Failed,No,2796.2,Variation,,,,,Failed,Maturity,False,Not Approved,,55924.05
+TID00200,OID00200,CID9785,US465065481,NFLX,Sell,789,1245.84,982967.76,USD,14/10/2025,24/06/2025,Citibank,Trader C,Failed,No,49148.39,Variation,,,,,Satisfied,Maturity,False,Not Approved,,982967.76

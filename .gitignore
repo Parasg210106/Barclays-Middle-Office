@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Node
+node_modules/
+build/
+dist/
+.npm
+.eslintcache
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+*.pid
+.dockerignore
+
+# Logs
+*.log
+logs/
+service_startup.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project specific
+firebase_key.json
+firebase_key_*.json
+*.json.key
+validated_trades.json
+service_startup.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Generated files
+Frontend/public/styles/tailwind.generated.css
+Frontend/public/styles/output.css
+
+# Data files (optional - uncomment if you don't want to track data)
+# filtered_trades/
+# data/
+
+# Virtual environments
+venv/
+.venv/ 

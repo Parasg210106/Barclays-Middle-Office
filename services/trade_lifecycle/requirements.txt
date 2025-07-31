@@ -1,0 +1,19 @@
+pandas
+openpyxl
+fastapi
+uvicorn
+python-multipart
+jinja2
+# MongoDB
+pymongo
+motor
+# Kafka
+kafka-python
+aiokafka
+# Prometheus monitoring
+prometheus-client
+prometheus-fastapi-instrumentator
+# Environment variables
+python-dotenv
+# Additional utilities
+pydantic 

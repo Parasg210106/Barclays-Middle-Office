@@ -1,0 +1,6 @@
+{
+    "quantity": { "min": 1 },
+    "price": { "min": 0.01 },
+    "trade_type": { "allowed": ["BUY", "SELL"] },
+    "unique_trade_id": true
+  }

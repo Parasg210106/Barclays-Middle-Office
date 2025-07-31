@@ -1,0 +1,4 @@
+{
+  "fo_fo": ["BuySellMismatch", "QuantityMismatch", "SymbolMismatch", "PriceMismatch", "TradeValueMismatch"],
+  "fo_bo": ["BuySellMismatch", "QuantityMismatch", "SymbolMismatch", "PriceMismatch", "TradeValueMismatch", "SettlementDateMismatch"]
+}

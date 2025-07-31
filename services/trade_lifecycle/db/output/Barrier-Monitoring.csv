@@ -1,0 +1,6 @@
+Trade ID,Order ID,Client ID,ISIN,Symbol,Trade Type,Quantity,Price,Trade Value,Currency,Maturity Date,Trade Date,Counterparty,Trader Name,KYC Status,Reference Data Validated,Collateral Required,Margin Type,Coupon rate,Coupon schedule ,Observation Dates,Auto-call level,Margin Status,event_type
+TID00002,OID00002,CID2693,US511561515,BABA,Sell,916,742.23,679882.68,GBP,1/20/2024,1/18/2024,Goldman Sachs,Trader A,Failed,No,33994.13,Variation,,,,,Satisfied,Barrier-Monitoring 
+TID00006,OID00006,CID1598,US182199097,GOOGL,Sell,514,707.02,363408.28,USD,2/20/2024,2/18/2024,Citibank,Trader C,Failed,Yes,18170.41,Initial,,,,,Pending,Barrier-Monitoring 
+TID00010,OID00010,CID3450,US736755554,AAPL,Sell,629,1057.79,665349.91,GBP,1/26/2024,1/24/2024,Citibank,Trader A,Pending,No,33267.5,Variation,,,,,Failed,Barrier-Monitoring 
+TID00014,OID00014,CID3503,US861733893,BABA,Buy,263,1463.38,384868.94,GBP,4/18/2024,4/16/2024,JPMorgan,Trader A,Pending,No,19243.45,Variation,,,,,Satisfied,Barrier-Monitoring 
+TID00018,OID00018,CID3588,US212110852,NVDA,Buy,504,402.89,203056.56,GBP,03/02/2024,2/29/2024,Goldman Sachs,Trader A,Pending,Yes,10152.83,Variation,,,,,Failed,Barrier-Monitoring 
