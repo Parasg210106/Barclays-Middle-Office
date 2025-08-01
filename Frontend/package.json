@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Middle Office Trade Booking Simulation Frontend",
   "scripts": {
-    "build": "postcss src/styles/tailwind.css -o public/styles.css",
+    "build": "npx tailwindcss -i ./public/styles/tailwind.css -o ./public/styles/output.css --minify",
     "watch": "postcss src/styles/tailwind.css -o public/styles.css --watch",
     "start": "serve ./public -l 8080",
     "build:css": "npx tailwindcss -i ./public/styles/tailwind.css -o ./public/styles/tailwind.generated.css --minify"
