@@ -353,10 +353,10 @@ window.handleFileUpload = function(event) {
         let parser = null;
         const lowerName = file.name.toLowerCase();
         if (lowerName.startsWith("equity")) {
-            endpoint = "http://localhost:8001/trades/bulk"; // should be 8001, not 8000
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-capture/trades/bulk"; // should be 8001, not 8000
             parser = mapCsvRowToApi;
         } else if (lowerName.startsWith("fx")) {
-            endpoint = "http://localhost:8002/forexs/bulk";
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forexs/bulk";
             parser = mapForexCsvRowToApi;
         } else {
             alert("Unknown file type. File name must start with 'equity' or 'fx'.");

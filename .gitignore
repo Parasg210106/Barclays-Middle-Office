@@ -66,7 +66,7 @@ service_startup.log
 
 # Generated files
 Frontend/public/styles/tailwind.generated.css
-Frontend/public/styles/output.css
+#Frontend/public/styles/output.css
 
 # Data files (optional - uncomment if you don't want to track data)
 # filtered_trades/

@@ -162,7 +162,7 @@ function getAssignedDepartment(trade) {
 }
 
 // Inline getTrades function (copied from src/scripts/api.js)
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000";
 async function getTrades() {
     const response = await fetch(`${API_BASE_URL}/trades`);
     if (!response.ok) throw new Error("Failed to fetch trades");
@@ -177,13 +177,13 @@ let currentInstrument = 'Equity'; // Track selected instrument
 
 async function fetchForexTradesAndValidation() {
     // Fetch all captured forex trades
-    const tradesRes = await fetch('http://localhost:8002/forexs');
+            const tradesRes = await fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forexs');
     if (!tradesRes.ok) throw new Error('Failed to fetch forex trades');
     const trades = await tradesRes.json();
     // Fetch validation results (may be empty if no termsheets yet)
     let validationMap = {};
     try {
-        const valRes = await fetch('http://localhost:8016/api/validate-forex-capture');
+        const valRes = await fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-validation/api/validate-forex-capture');
         if (valRes.ok) {
             const valData = await valRes.json();
             (valData.results || []).forEach(v => {
@@ -231,9 +231,9 @@ async function fetchAndMergeValidationResults() {
     try {
         let endpoint = '';
         if (currentInstrument === 'Equity') {
-            endpoint = 'http://localhost:8011/validation-results?t=' + Date.now();
+            endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-validation/validation-results?t=' + Date.now();
         } else if (currentInstrument === 'Forex') {
-            endpoint = 'http://localhost:8016/api/validate-forex-capture';
+            endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-validation/api/validate-forex-capture';
         } else {
             allTrades.forEach(trade => { trade.ValidationStatus = 'Pending'; });
             return;
@@ -484,8 +484,8 @@ window.updateTradeCountFromBackend = async function() {
     try {
         // Fetch both equity and forex trades
         const [equityRes, forexRes] = await Promise.all([
-            fetch('http://localhost:8001/trades'),
-            fetch('http://localhost:8002/forexs')
+            fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-capture/trades'),
+            fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forexs')
         ]);
         const equityTrades = equityRes.ok ? await equityRes.json() : [];
         const forexTrades = forexRes.ok ? await forexRes.json() : [];
@@ -508,7 +508,7 @@ window.updateTradeCountFromBackend = async function() {
       console.log('Debug: updateOverviewStats function called!');
       try {
           console.log('Debug: Calling overview stats API...');
-          const response = await fetch('http://localhost:8002/overview-stats');
+          const response = await fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/overview-stats');
           console.log('Debug: API response status:', response.status);
           if (response.ok) {
               const stats = await response.json();
@@ -571,7 +571,7 @@ window.showTermsheet = async function(tradeId) {
     try {
         let allowedFields = [];
         if (currentInstrument === 'Equity') {
-            let url = `http://localhost:8013/equity-termsheets/${tradeId}`;
+            let url = `https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-termsheet-capture/equity-termsheets/${tradeId}`;
             allowedFields = [
                 "Trade ID", "Order ID", "Client ID", "ISIN", "Symbol", "Trade Type",
                 "Quantity", "Price", "Trade Value", "Currency", "Trade Date", "Settlement Date",
@@ -713,7 +713,7 @@ window.showTermsheet = async function(tradeId) {
     }
 }
 
-const TERMSHEET_SERVICE_URL = "http://localhost:8013";
+const TERMSHEET_SERVICE_URL = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-termsheet-capture";
 
 async function fetchTermsheets() {
     const response = await fetch(`${TERMSHEET_SERVICE_URL}/equity-termsheets`);
@@ -817,7 +817,7 @@ if (typeof window.handleTermsheetFileUpload === 'undefined') {
 // Check if the equity termsheet service is running
 window.checkEquityTermsheetService = async function() {
     try {
-        const response = await fetch('http://localhost:8013/equity-termsheets', {
+        const response = await fetch('https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-termsheet-capture/equity-termsheets', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -838,9 +838,9 @@ window.handleTermsheetFileUpload = function(event) {
     
     let endpoint = "";
         if (lowerName.startsWith("equity")) {
-            endpoint = "http://localhost:8013/equity-termsheets";
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-termsheet-capture/equity-termsheets";
         } else if (lowerName.startsWith("fx") || lowerName.startsWith("forex")) {
-            endpoint = "http://localhost:8014/forex-termsheets";
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-termsheet-capture/forex-termsheets";
         } else {
             alert("Unknown file type. File name must start with 'equity' or 'fx'.");
             return;
@@ -935,7 +935,7 @@ async function fetchEquityReconciliationResultsFromFirebase() {
 
 async function triggerBackendReconciliation(systemType) {
     // Adjust the backend URL and port as needed
-    const url = `http://localhost:8025/api/v1/reconcile/${systemType}?save_to_firebase=true`;
+            const url = `https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-reconciliation/api/v1/reconcile/${systemType}?save_to_firebase=true`;
     try {
         await fetch(url, { method: 'GET' });
     } catch (err) {
@@ -946,7 +946,7 @@ async function triggerBackendReconciliation(systemType) {
 
 async function triggerEquityBackendReconciliation(systemType) {
     // Equity reconciliation backend URL and port
-    const url = `http://localhost:8026/reconcile/${systemType}?save_to_firebase=true`;
+            const url = `https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-reconciliation/reconcile/${systemType}?save_to_firebase=true`;
     try {
         await fetch(url, { method: 'GET' });
     } catch (err) {
@@ -1324,7 +1324,7 @@ window.loadAndShowLifecycleEvents = async function() {
             else if (eventType === 'Early Redemption') eventEndpoint = 'early-redemption';
             else if (eventType === 'Barrier Monitoring') eventEndpoint = 'barrier-monitoring';
             // Fetch from backend - use the correct endpoint for Forex
-            const res = await fetch(`http://localhost:8024/api/event/${eventEndpoint}`);
+            const res = await fetch(`https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/trade-lifecycle/api/event/${eventEndpoint}`);
             if (res.ok) trades = await res.json();
         } else if (instrument === 'Equity') {
             // Existing logic for equity
@@ -2055,10 +2055,10 @@ window.showValidationFailureReason = function(tradeId) {
 
 // --- Reconciliation CSV Upload Logic ---
 const RECON_UPLOAD_ENDPOINTS = {
-    SystemA: { url: 'http://localhost:8017/upload_systemA_csv' },
-    SystemB: { url: 'http://localhost:8018/upload_systemB_csv' },
-    FrontOffice: { url: 'http://localhost:8019/upload_FOentry_csv' },
-    BackOffice: { url: 'http://localhost:8020/upload_BOentry_csv' },
+            SystemA: { url: 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemA-capture/upload_systemA_csv' },
+        SystemB: { url: 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemB-capture/upload_systemB_csv' },
+        FrontOffice: { url: 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-FOentry-capture/upload_FOentry_csv' },
+        BackOffice: { url: 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-BOentry-capture/upload_BOentry_csv' },
 };
 window.openReconciliationUpload = function(type) {
     // Create a hidden file input
