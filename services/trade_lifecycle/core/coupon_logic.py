@@ -43,10 +43,26 @@ def safe_float(value):
 
 def parse_date(date_str):
     """Parse date string in various formats"""
-    if not date_str or date_str.strip() == '':
+    if not date_str or str(date_str).lower() == 'nan':
         return None
     
-    date_str = date_str.strip()
+    date_str = str(date_str).strip()
+    
+    # Try YYYY-DD-MM format first (as seen in the data: 2025-23-07)
+    if date_str.count('-') == 2:
+        try:
+            parts = date_str.split('-')
+            if len(parts) == 3:
+                yyyy = int(parts[0])
+                dd = int(parts[1])
+                mm = int(parts[2])
+                # Check if this is YYYY-DD-MM format (day > 12)
+                if dd > 12 and mm <= 12:
+                    return datetime(yyyy, mm, dd).date()
+        except (ValueError, TypeError):
+            pass
+    
+    # Try standard formats
     formats = ['%m/%d/%Y', '%Y-%m-%d', '%m/%d/%y', '%Y/%m/%d', '%d/%m/%Y']
     
     for fmt in formats:

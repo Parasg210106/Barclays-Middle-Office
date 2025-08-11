@@ -7,11 +7,30 @@ import json
 REDEEMED_FILE = 'redeemed_status.json'
 
 def parse_date(date_str):
+    """Parse date string in various formats"""
     if not date_str or str(date_str).strip() == '':
         return None
+    
+    date_str = str(date_str).strip()
+    
+    # Try YYYY-DD-MM format first (as seen in the data: 2025-23-07)
+    if date_str.count('-') == 2:
+        try:
+            parts = date_str.split('-')
+            if len(parts) == 3:
+                yyyy = int(parts[0])
+                dd = int(parts[1])
+                mm = int(parts[2])
+                # Check if this is YYYY-DD-MM format (day > 12)
+                if dd > 12 and mm <= 12:
+                    return datetime(yyyy, mm, dd).date()
+        except (ValueError, TypeError):
+            pass
+    
+    # Try standard formats
     for fmt in ('%m/%d/%Y', '%Y-%m-%d', '%m/%d/%y', '%Y/%m/%d', '%d/%m/%Y'):
         try:
-            return datetime.strptime(str(date_str).strip(), fmt).date()
+            return datetime.strptime(date_str, fmt).date()
         except Exception:
             continue
     return None

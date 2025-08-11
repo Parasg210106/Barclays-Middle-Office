@@ -69,12 +69,28 @@ def get_maturity_trades():
         maturity_date_str = maturity_date_str.strip()
         maturity_date = None
         if maturity_date_str:
-            for fmt in ('%m/%d/%Y', '%Y-%m-%d', '%m/%d/%y'):
+            # Try YYYY-DD-MM format first (as seen in the data: 2025-23-07)
+            if maturity_date_str.count('-') == 2:
                 try:
-                    maturity_date = datetime.strptime(maturity_date_str, fmt).date()
-                    break
-                except Exception:
-                    continue
+                    parts = maturity_date_str.split('-')
+                    if len(parts) == 3:
+                        yyyy = int(parts[0])
+                        dd = int(parts[1])
+                        mm = int(parts[2])
+                        # Check if this is YYYY-DD-MM format (day > 12)
+                        if dd > 12 and mm <= 12:
+                            maturity_date = datetime(yyyy, mm, dd).date()
+                except (ValueError, TypeError):
+                    pass
+            
+            # If YYYY-DD-MM didn't work, try standard formats
+            if not maturity_date:
+                for fmt in ('%m/%d/%Y', '%Y-%m-%d', '%m/%d/%y'):
+                    try:
+                        maturity_date = datetime.strptime(maturity_date_str, fmt).date()
+                        break
+                    except Exception:
+                        continue
         maturity_reached = 'No'
         days_diff = '0'
         if maturity_date:

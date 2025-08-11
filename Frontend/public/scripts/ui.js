@@ -7,6 +7,21 @@ function parseFlexibleDate(dateStr) {
     let d = new Date(dateStr);
     if (!isNaN(d.getTime())) return d;
     
+    // Try YYYY-DD-MM format (as seen in the data: 2025-23-07)
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        let parts = dateStr.split('-');
+        if (parts.length === 3) {
+            let yyyy = parseInt(parts[0], 10);
+            let dd = parseInt(parts[1], 10);
+            let mm = parseInt(parts[2], 10);
+            // Check if this is YYYY-DD-MM format (day > 12)
+            if (dd > 12 && mm <= 12) {
+                let d1 = new Date(yyyy, mm - 1, dd);
+                if (!isNaN(d1.getTime())) return d1;
+            }
+        }
+    }
+    
     // Try DD/MM/YYYY format (common in UK/European format)
     let parts = dateStr.split('/');
     if (parts.length === 3) {
@@ -26,10 +41,19 @@ function parseFlexibleDate(dateStr) {
         }
     }
     
-    // Try YYYY-MM-DD
+    // Try YYYY-MM-DD (standard ISO format)
     if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        let d3 = new Date(dateStr);
-        if (!isNaN(d3.getTime())) return d3;
+        let parts = dateStr.split('-');
+        if (parts.length === 3) {
+            let yyyy = parseInt(parts[0], 10);
+            let mm = parseInt(parts[1], 10);
+            let dd = parseInt(parts[2], 10);
+            // Check if this is YYYY-MM-DD format (month <= 12)
+            if (mm <= 12 && dd <= 31) {
+                let d3 = new Date(yyyy, mm - 1, dd);
+                if (!isNaN(d3.getTime())) return d3;
+            }
+        }
     }
     return null;
 }
