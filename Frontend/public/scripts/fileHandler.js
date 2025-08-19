@@ -380,10 +380,10 @@ window.handleFileUpload = function(event) {
         let parser = null;
         const lowerName = file.name.toLowerCase();
         if (lowerName.startsWith("equity")) {
-            endpoint = "http://localhost:8001/api/equity-capture/trades/bulk"; // should be 8001, not 8000
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-capture/trades/bulk";
             parser = mapCsvRowToApi;
         } else if (lowerName.startsWith("fx")) {
-            endpoint = "http://localhost:8002/api/forex-capture/forexs/bulk";
+            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forexs/bulk";
             parser = mapForexCsvRowToApi;
         } else {
             alert("Unknown file type. File name must start with 'equity' or 'fx'.");
@@ -469,7 +469,7 @@ window.uploadSingleForexTrade = function(tradeData) {
     
     console.log(`[DEBUG] Uploading single forex trade with client ID:`, selectedClientId);
     
-    let endpoint = 'http://localhost:8002/api/forex-capture/forex';
+            let endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forex';
     if (selectedClientId && selectedClientId.trim() !== '') {
         endpoint = `${endpoint}?client_id=${encodeURIComponent(selectedClientId.trim())}`;
         console.log(`[DEBUG] Updated endpoint with client_id:`, endpoint);
