@@ -1165,19 +1165,19 @@ function getActionStatement(field, reconciliationType) {
                 // Use equity service endpoints
                 switch(type) {
                     case 'systemA': 
-                        endpoint = 'http://localhost:8021/api/equity-systemA-capture/upload_systemA_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-systemA-capture/upload_systemA_csv';
                         serviceName = 'Equity System A';
                         break;
                     case 'systemB': 
-                        endpoint = 'http://localhost:8022/api/equity-systemB-capture/upload_systemB_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-systemB-capture/upload_systemB_csv';
                         serviceName = 'Equity System B';
                         break;
                     case 'fo': 
-                        endpoint = 'http://localhost:8027/api/equity-FOentry-capture/upload_FOentry_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-FOentry-capture/upload_FOentry_csv';
                         serviceName = 'Equity Front Office';
                         break;
                     case 'bo': 
-                        endpoint = 'http://localhost:8023/api/equity-BOentry-capture/upload_BOentry_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-BOentry-capture/upload_BOentry_csv';
                         serviceName = 'Equity Back Office';
                         break;
                 }
@@ -1185,19 +1185,19 @@ function getActionStatement(field, reconciliationType) {
                 // Use forex service endpoints (existing)
                 switch(type) {
                     case 'systemA': 
-                        endpoint = 'http://localhost:8017/api/forex-systemA-capture/upload_systemA_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemA-capture/upload_systemA_csv';
                         serviceName = 'Forex System A';
                         break;
                     case 'systemB': 
-                        endpoint = 'http://localhost:8018/api/forex-systemB-capture/upload_systemB_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemB-capture/upload_systemB_csv';
                         serviceName = 'Forex System B';
                         break;
                     case 'fo': 
-                        endpoint = 'http://localhost:8019/api/forex-FOentry-capture/upload_FOentry_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-FOentry-capture/upload_FOentry_csv';
                         serviceName = 'Forex Front Office';
                         break;
                     case 'bo': 
-                        endpoint = 'http://localhost:8020/api/forex-BOentry-capture/upload_BOentry_csv';
+                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-BOentry-capture/upload_BOentry_csv';
                         serviceName = 'Forex Back Office';
                         break;
                 }
@@ -1226,7 +1226,7 @@ function getActionStatement(field, reconciliationType) {
     </script>
     <script>
         // --- CONFIG ---
-        const TRADE_LIFECYCLE_API_BASE = 'http://localhost:8024/api/trade-lifecycle'; // Backend URL for Trade Lifecycle service
+        const TRADE_LIFECYCLE_API_BASE = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/trade-lifecycle'; // Backend URL for Trade Lifecycle service
         
         // Helper function to safely set text content
         function safeSetTextContent(elementId, text) {
