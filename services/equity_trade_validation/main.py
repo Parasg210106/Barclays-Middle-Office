@@ -21,7 +21,7 @@ app.add_middleware(
 )
 
 # Register API routes
-app.include_router(routes.router)
+app.include_router(routes.router, prefix="/api/equity-validation")
 
 # Serve validated_trades.json as a static file
 STATIC_DIR = os.path.join(os.path.dirname(__file__), 'db')

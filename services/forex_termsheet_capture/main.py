@@ -14,7 +14,7 @@ app.add_middleware(
 )
 
 # Mount the API router
-app.include_router(routes.router)
+app.include_router(routes.router, prefix="/api/forex-termsheet-capture")
 
 # Remove or comment out the old /forex-termsheet-capture/bulk endpoint
 # @app.post("/forex-termsheet-capture/bulk")

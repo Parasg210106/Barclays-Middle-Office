@@ -5,9 +5,10 @@ from services.forex_capture.models import Forex
 from typing import List, Optional
 import os
 from services.firebase_client import get_firestore_client
+from services.forex_capture.services.unified_data_service import unified_data_service
 # Removed: from services.forex_termsheet_capture.db.termsheet_repository import save_termsheet
 
-FOREX_FILE = os.path.join(os.path.dirname(__file__), 'forex.json')
+FOREX_FILE = os.path.join(os.path.dirname(__file__), '../db/forex.json')
 
 class ForexRepository:
     def __init__(self, file_path=FOREX_FILE):
@@ -15,7 +16,7 @@ class ForexRepository:
         self.db = get_firestore_client()
         self.collection_name = "fx_capture"  # Use the premade collection for this service
 
-    def save_forex(self, forex: Forex):
+    def save_forex(self, forex: Forex, client_id: str = None):
         print(f"[DEBUG] Saving forex trade to fx_capture: {forex.TradeID}")
         
         # Debug: Print the forex object data before saving
@@ -29,8 +30,35 @@ class ForexRepository:
         print(f"[DEBUG] BSB_Equity: '{forex_dict.get('BSB_Equity', 'NOT_FOUND')}'")
         print(f"[DEBUG] Settlement_Method_Equity: '{forex_dict.get('Settlement_Method_Equity', 'NOT_FOUND')}'")
         
+        # Save to fx_capture collection (existing functionality)
         self.db.collection(self.collection_name).document(forex.TradeID).set(forex_dict)
+        
+        # Note: unified_data updates are handled by the calling API route
+        # to prevent duplicate execution
+        print(f"[DEBUG] Successfully saved trade {forex.TradeID} to fx_capture. Unified data updates handled by API route.")
+        
         # Removed: logic that creates and stores termsheet in fx_termsheets
+
+    def save_forex_bulk(self, forexs: List[Forex], client_id: str = None):
+        """
+        Save multiple forex trades to fx_capture collection.
+        Note: unified_data updates are handled by the calling API route to avoid duplication.
+        
+        Args:
+            forexs: List of Forex trade objects to save
+            client_id: The client ID (kept for compatibility but not used here)
+        """
+        print(f"[DEBUG] Saving {len(forexs)} forex trades to fx_capture")
+        
+        # Save each trade to fx_capture collection (existing functionality)
+        for i, forex in enumerate(forexs):
+            print(f"[DEBUG] Saving trade {i+1}/{len(forexs)}: {forex.TradeID}")
+            forex_dict = forex.dict(by_alias=True)
+            self.db.collection(self.collection_name).document(forex.TradeID).set(forex_dict)
+        
+        # Note: unified_data updates are handled by the calling API route
+        # to prevent duplicate execution of the bulk update logic
+        print(f"[DEBUG] Saved {len(forexs)} trades to fx_capture. Unified data updates handled by API route.")
 
     def load_forexs(self) -> List[Forex]:
         docs = self.db.collection(self.collection_name).stream()

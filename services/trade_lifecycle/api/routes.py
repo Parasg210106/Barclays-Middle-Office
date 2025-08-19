@@ -57,24 +57,6 @@ def clean_for_json(obj):
     else:
         return obj
 
-@router.get("/test-firestore")
-def test_firestore():
-    """Test endpoint to check if Firestore is working"""
-    try:
-        db = get_firestore_client()
-        collections = list(db.collections())
-        return JSONResponse({
-            "status": "success",
-            "collections": [col.id for col in collections],
-            "message": "Firestore connection working"
-        })
-    except Exception as e:
-        return JSONResponse({
-            "status": "error",
-            "error": str(e),
-            "message": "Firestore connection failed"
-        })
-
 @router.get("/", response_class=HTMLResponse)
 def overview(request: Request):
     allowed_filenames = set()

@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 from services.equity_capture.api.routes import router
-app.include_router(router)
+app.include_router(router, prefix="/api/equity-capture")
 
 # Add single trade POST endpoint for direct posting
 from fastapi import Request

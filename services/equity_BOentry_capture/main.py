@@ -24,7 +24,7 @@ app.add_middleware(
 )
 
 from services.equity_BOentry_capture.api.routes import router
-app.include_router(router)
+app.include_router(router, prefix="/api/equity-BOentry-capture")
 
 
 if __name__ == "__main__":

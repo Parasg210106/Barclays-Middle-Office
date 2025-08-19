@@ -314,6 +314,9 @@ function mapCsvRowToApi(row) {
 }
 
 function mapForexCsvRowToApi(row) {
+    console.log("[DEBUG] mapForexCsvRowToApi called with row:", row);
+    console.log("[DEBUG] Row keys:", Object.keys(row));
+    
     // List of numeric (float) fields in the Forex model
     const floatFields = [
         "NotionalAmount", "FXRate", "CommissionAmount", "BrokerageFee", "CustodyFee", "SettlementCost", "FXGainLoss", "PnlCalculated"
@@ -327,6 +330,10 @@ function mapForexCsvRowToApi(row) {
     
     // Use the mapping instead of hardcoded fields
     for (const [csvKey, apiKey] of Object.entries(forexCsvToApiFieldMap)) {
+        console.log(`[DEBUG] Processing mapping: "${csvKey}" -> "${apiKey}"`);
+        console.log(`[DEBUG] Row has key "${csvKey}": ${csvKey in row}`);
+        console.log(`[DEBUG] Row value for "${csvKey}": "${row[csvKey]}"`);
+        
         let value = row[csvKey] !== undefined ? row[csvKey] : "";
         
         if (floatFields.includes(apiKey)) {
@@ -339,24 +346,44 @@ function mapForexCsvRowToApi(row) {
             value = value.trim();
         }
         mapped[apiKey] = value;
+        console.log(`[DEBUG] Mapped "${csvKey}" -> "${apiKey}" = "${value}"`);
     }
     
+    console.log("[DEBUG] Final mapped result:", mapped);
     return mapped;
 }
 
 window.handleFileUpload = function(event) {
     const files = event.target.files;
     if (!files.length) return;
+    
+    // Check if any of the files are forex files and if client is selected
+    const hasForexFiles = Array.from(files).some(file => file.name.toLowerCase().startsWith("fx"));
+    
+    if (hasForexFiles) {
+        const clientDropdown = document.getElementById('client-dropdown');
+        const selectedClientId = clientDropdown ? clientDropdown.value : null;
+        
+        if (!selectedClientId || selectedClientId.trim() === '') {
+            alert("Please select a Client ID from the dropdown before uploading forex files. This is required to update the unified_data collection.");
+            // Clear the file input
+            event.target.value = '';
+            return;
+        }
+        
+        console.log(`[DEBUG] Forex file upload with selected client ID: ${selectedClientId}`);
+    }
+    
     Array.from(files).forEach(file => {
         // Determine endpoint and parser based on file name
         let endpoint = "";
         let parser = null;
         const lowerName = file.name.toLowerCase();
         if (lowerName.startsWith("equity")) {
-            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-capture/trades/bulk"; // should be 8001, not 8000
+            endpoint = "http://localhost:8001/api/equity-capture/trades/bulk"; // should be 8001, not 8000
             parser = mapCsvRowToApi;
         } else if (lowerName.startsWith("fx")) {
-            endpoint = "https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forexs/bulk";
+            endpoint = "http://localhost:8002/api/forex-capture/forexs/bulk";
             parser = mapForexCsvRowToApi;
         } else {
             alert("Unknown file type. File name must start with 'equity' or 'fx'.");
@@ -367,9 +394,15 @@ window.handleFileUpload = function(event) {
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
+                console.log("[DEBUG] CSV parsing results:", results);
+                console.log("[DEBUG] CSV headers:", results.meta.fields);
+                console.log("[DEBUG] First row data:", results.data[0]);
+                
                 // Map each row to API format
                 const trades = results.data.map(parser);
-                console.log("Mapped trades to send:", trades);
+                console.log("[DEBUG] Mapped trades to send:", trades);
+                console.log("[DEBUG] First mapped trade keys:", Object.keys(trades[0]));
+                console.log("[DEBUG] First mapped trade TradeID:", trades[0].TradeID);
                 sendBulkTrades(trades, endpoint);
             },
             error: function(err) {
@@ -384,7 +417,22 @@ function sendBulkTrades(trades, endpoint) {
     console.log(`[DEBUG] First trade data:`, trades[0]);
     console.log(`[DEBUG] All trade keys:`, Object.keys(trades[0]));
     
-    fetch(endpoint, {
+    // Get the selected client ID from the dropdown
+    const clientDropdown = document.getElementById('client-dropdown');
+    const selectedClientId = clientDropdown ? clientDropdown.value : null;
+    
+    console.log(`[DEBUG] Selected client ID:`, selectedClientId);
+    
+    // Add client_id as query parameter if it's a forex endpoint and client is selected
+    let finalEndpoint = endpoint;
+    if (endpoint.includes('forex-capture') && selectedClientId && selectedClientId.trim() !== '') {
+        finalEndpoint = `${endpoint}?client_id=${encodeURIComponent(selectedClientId.trim())}`;
+        console.log(`[DEBUG] Updated endpoint with client_id:`, finalEndpoint);
+    } else if (endpoint.includes('forex-capture') && (!selectedClientId || selectedClientId.trim() === '')) {
+        console.warn(`[DEBUG] No client ID selected for forex capture. Trades will be captured but unified_data won't be updated.`);
+    }
+    
+    fetch(finalEndpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -402,10 +450,61 @@ function sendBulkTrades(trades, endpoint) {
     })
     .then(data => {
         console.log(`[DEBUG] Success response:`, data);
-        alert(`Successfully uploaded ${trades.length} trades!`);
+        if (endpoint.includes('forex-capture') && selectedClientId && selectedClientId.trim() !== '') {
+            alert(`Successfully uploaded ${trades.length} trades and updated unified_data for client ${selectedClientId}!`);
+        } else {
+            alert(`Successfully uploaded ${trades.length} trades!`);
+        }
     })
     .catch(error => {
         console.error(`[DEBUG] Upload error:`, error);
         alert(`Upload failed: ${error.message}`);
+    });
+}
+
+// Utility function for single trade upload (for future use)
+window.uploadSingleForexTrade = function(tradeData) {
+    const clientDropdown = document.getElementById('client-dropdown');
+    const selectedClientId = clientDropdown ? clientDropdown.value : null;
+    
+    console.log(`[DEBUG] Uploading single forex trade with client ID:`, selectedClientId);
+    
+    let endpoint = 'http://localhost:8002/api/forex-capture/forex';
+    if (selectedClientId && selectedClientId.trim() !== '') {
+        endpoint = `${endpoint}?client_id=${encodeURIComponent(selectedClientId.trim())}`;
+        console.log(`[DEBUG] Updated endpoint with client_id:`, endpoint);
+    } else {
+        console.warn(`[DEBUG] No client ID selected. Trade will be captured but unified_data won't be updated.`);
+    }
+    
+    return fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tradeData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                console.error(`[DEBUG] Server error:`, errorData);
+                throw new Error(`HTTP ${response.status}: ${JSON.stringify(errorData)}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(`[DEBUG] Single trade upload success:`, data);
+        if (selectedClientId && selectedClientId.trim() !== '') {
+            alert(`Successfully uploaded trade and updated unified_data for client ${selectedClientId}!`);
+        } else {
+            alert(`Successfully uploaded trade!`);
+        }
+        return data;
+    })
+    .catch(error => {
+        console.error(`[DEBUG] Single trade upload error:`, error);
+        alert(`Upload failed: ${error.message}`);
+        throw error;
     });
 }

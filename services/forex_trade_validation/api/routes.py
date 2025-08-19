@@ -173,6 +173,75 @@ async def health_check():
     """
     return {"status": "healthy", "service": "forex_trade_validation"}
 
+@router.get("/debug-collections")
+async def debug_collections():
+    """
+    Debug endpoint to check what's in the fx_capture and fx_validation collections.
+    """
+    try:
+        db = get_firestore_client()
+        
+        # Check fx_capture collection
+        fx_capture_docs = list(db.collection("fx_capture").stream())
+        print(f"[DEBUG] fx_capture collection has {len(fx_capture_docs)} documents")
+        
+        # Check fx_validation collection
+        fx_validation_docs = list(db.collection("fx_validation").stream())
+        print(f"[DEBUG] fx_validation collection has {len(fx_validation_docs)} documents")
+        
+        # Check fx_termsheet collection
+        fx_termsheet_docs = list(db.collection("fx_termsheet").stream())
+        print(f"[DEBUG] fx_termsheet collection has {len(fx_termsheet_docs)} documents")
+        
+        return {
+            "fx_capture_count": len(fx_capture_docs),
+            "fx_validation_count": len(fx_validation_docs),
+            "fx_termsheet_count": len(fx_termsheet_docs),
+            "fx_capture_sample": [doc.to_dict() for doc in fx_capture_docs[:2]] if fx_capture_docs else [],
+            "fx_validation_sample": [doc.to_dict() for doc in fx_validation_docs[:2]] if fx_validation_docs else [],
+            "fx_termsheet_sample": [doc.to_dict() for doc in fx_termsheet_docs[:2]] if fx_termsheet_docs else []
+        }
+        
+    except Exception as e:
+        print(f"[DEBUG] Error in debug_collections: {str(e)}")
+        return {"error": str(e)}
+
+@router.get("/get-validation-status")
+async def get_validation_status():
+    """
+    Get the current validation status for all trades from the fx_validation collection.
+    This endpoint retrieves existing validation results without running validation again.
+    """
+    try:
+        db = get_firestore_client()
+        validation_docs = list(db.collection("fx_validation").stream())
+        
+        print(f"[DEBUG] Found {len(validation_docs)} validation documents in fx_validation collection")
+        
+        results = []
+        for doc in validation_docs:
+            doc_data = doc.to_dict()
+            print(f"[DEBUG] Processing validation doc: {doc.id} with data: {doc_data}")
+            
+            results.append({
+                "TradeID": doc_data.get("TradeID", ""),
+                "TraderID": doc_data.get("TraderID", ""),
+                "Currency": doc_data.get("Currency", ""),
+                "TradeDate": doc_data.get("TradeDate", ""),
+                "KYCStatus": doc_data.get("KYCStatus", ""),
+                "ValidationStatus": doc_data.get("ValidationStatus", "Pending"),
+                "ValidationErrors": doc_data.get("ValidationErrors", []),
+                "AssignedTo": doc_data.get("AssignedTo", "NA"),
+                "Actions": "View Termsheet"
+            })
+        
+        print(f"[DEBUG] Returning {len(results)} validation results")
+        return {"results": results}
+        
+    except Exception as e:
+        print(f"[DEBUG] Error in get_validation_status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving validation status: {str(e)}")
+
 @router.get("/validate-forex-capture")
 async def validate_forex_capture():
     """

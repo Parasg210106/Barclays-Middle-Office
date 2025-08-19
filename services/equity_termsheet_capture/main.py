@@ -13,7 +13,7 @@ app.add_middleware(
 )
 
 # Mount the API router
-app.include_router(routes.router)
+app.include_router(routes.router, prefix="/api/equity-termsheet-capture")
 
 # Remove or comment out the old /equity-termsheet-capture/bulk endpoint
 # @app.post("/equity-termsheet-capture/bulk")

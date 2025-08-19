@@ -25,7 +25,7 @@ app.mount("/filtered_trades", StaticFiles(directory="filtered_trades"), name="fi
 templates = Jinja2Templates(directory="frontend/templates")
 
 # Include the API router
-app.include_router(router) 
+app.include_router(router, prefix="/api/trade-lifecycle")
 
 if __name__ == "__main__":
     import uvicorn

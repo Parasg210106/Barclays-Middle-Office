@@ -24,7 +24,7 @@ app.add_middleware(
 )
 
 from services.forex_systemA_capture.api.routes import router
-app.include_router(router)
+app.include_router(router, prefix="/api/forex-systemA-capture")
 
 
 

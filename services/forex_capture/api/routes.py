@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 from services.forex_capture.models import Forex
 from services.forex_capture.services.capture_service import forex_capture_service
+from services.forex_capture.services.unified_data_service import UnifiedDataService
 import json
 import os
 from services.forex_capture.db.forex_repository import forex_repository
@@ -13,6 +14,7 @@ except ImportError:
     print("Warning: Firebase client not available")
 
 router = APIRouter()
+unified_data_service = UnifiedDataService()
 
 def normalize_csv_data(data: dict) -> dict:
     """
@@ -26,6 +28,14 @@ def normalize_csv_data(data: dict) -> dict:
     
     # Define mapping from common variations to exact model aliases
     column_mapping = {
+        # TradeID variations (CRITICAL - must be first)
+        "tradeid": "TradeID",
+        "trade id": "TradeID", 
+        "trade_id": "TradeID",
+        "Trade ID": "TradeID",
+        "TRADEID": "TradeID",
+        "TRADE_ID": "TradeID",
+        
         # Handle common spacing variations
         "counterparty_id": "Counterparty ID",
         "counterparty id": "Counterparty ID",
@@ -205,46 +215,72 @@ def normalize_csv_data(data: dict) -> dict:
     return normalized
 
 @router.post("/forex", response_model=Forex)
-async def add_forex(forex: Forex):
+async def add_forex(forex: Forex, client_id: str = None):
     try:
+        print(f"[DEBUG] Single trade capture initiated for TradeID: {forex.TradeID}")
+        print(f"[DEBUG] Client ID from dropdown: {client_id}")
+        
         # Check for duplicate in Firestore
         if forex_repository.get_forex(forex.TradeID):
             raise HTTPException(status_code=400, detail=f"TradeID '{forex.TradeID}' already exists")
-        forex_repository.save_forex(forex)
+        
+        # Save the trade to forex repository
+        forex_repository.save_forex(forex, client_id)
+        
+        # Update unified data if client_id is provided
+        if client_id:
+            try:
+                unified_data_service.update_unified_data_with_forex_trade(forex, client_id)
+                print(f"[DEBUG] Trade {forex.TradeID} successfully captured and unified_data updated for client {client_id}")
+            except Exception as e:
+                print(f"[DEBUG] Warning: unified_data update failed for {forex.TradeID}: {str(e)}")
+                # Don't fail the main operation if unified_data update fails
+        else:
+            print(f"[DEBUG] Trade {forex.TradeID} successfully captured (no unified_data update - client_id not provided)")
+        
         return forex
     except Exception as e:
+        print(f"[DEBUG] Error in single trade capture for {forex.TradeID}: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/forexs/bulk", response_model=List[Forex])
-async def bulk_capture_forexs(forexs_data: List[dict]):
+async def bulk_capture_forexs(forexs_data: List[dict], client_id: str = None):
+    # Validate and process the forex data
     results = []
     errors = []
     
     print(f"[DEBUG] Received {len(forexs_data)} trades for bulk processing")
+    print(f"[DEBUG] Client ID from dropdown: {client_id}")
+    
+    # First pass: validate and create Forex objects
+    forex_objects = []
     
     for i, forex_data in enumerate(forexs_data):
         try:
             print(f"[DEBUG] Processing trade {i+1}/{len(forexs_data)}")
             print(f"[DEBUG] Raw trade data: {forex_data}")
+            print(f"[DEBUG] Raw trade data keys: {list(forex_data.keys())}")
+            print(f"[DEBUG] Raw TradeID value: '{forex_data.get('TradeID', 'NOT_FOUND')}'")
+            print(f"[DEBUG] Raw TradeID type: {type(forex_data.get('TradeID'))}")
+            print(f"[DEBUG] Raw TradeID length: {len(str(forex_data.get('TradeID', '')))}")
+            print(f"[DEBUG] All raw values: {[(k, v, type(v)) for k, v in forex_data.items()]}")
             
-            # Check if TradeID is present and not empty
+            # Check if TradeID is present and not empty (frontend already normalized)
             trade_id = forex_data.get("TradeID", "").strip()
+            print(f"[DEBUG] After strip - trade_id: '{trade_id}'")
+            print(f"[DEBUG] After strip - trade_id type: {type(trade_id)}")
+            print(f"[DEBUG] After strip - trade_id length: {len(str(trade_id))}")
+            
+            # Skip empty rows completely (don't count as errors)
             if not trade_id:
-                errors.append({
-                    "TradeID": "EMPTY", 
-                    "error": "TradeID is required and cannot be empty"
-                })
+                print(f"[DEBUG] Skipping empty row {i+1} - no TradeID")
                 continue
             
-            # Normalize the data to handle column name variations
-            normalized_data = normalize_csv_data(forex_data)
+            print(f"[DEBUG] Found TradeID: {trade_id}")
             
-            # Debug: Print the normalized data before creating Forex object
-            print(f"[DEBUG] Normalized data for TradeID {trade_id}: {normalized_data}")
-            
-            # Create Forex object from normalized data
+            # Create Forex object from frontend-normalized data
             try:
-                forex = Forex.parse_obj(normalized_data)
+                forex = Forex.parse_obj(forex_data)
                 print(f"[DEBUG] Forex object created successfully for TradeID {trade_id}")
             except Exception as parse_error:
                 print(f"[DEBUG] Error parsing Forex object for TradeID {trade_id}: {parse_error}")
@@ -261,17 +297,48 @@ async def bulk_capture_forexs(forexs_data: List[dict]):
             
             if forex_repository.get_forex(forex.TradeID):
                 raise Exception(f"TradeID '{forex.TradeID}' already exists")
-            forex_repository.save_forex(forex)
+            
+            # Collect valid Forex objects for bulk processing
+            forex_objects.append(forex)
             results.append(forex)
+            
         except Exception as e:
             print(f"[DEBUG] Error processing trade {i+1}: {str(e)}")
             errors.append({"TradeID": forex_data.get("TradeID", "Unknown"), "error": str(e)})
     
     print(f"[DEBUG] Processing complete. Results: {len(results)}, Errors: {len(errors)}")
     
+    # Show summary of processing
+    total_rows = len(forexs_data)
+    skipped_rows = total_rows - len(results) - len(errors)
+    print(f"[DEBUG] Summary: {total_rows} total rows, {len(results)} processed, {len(errors)} errors, {skipped_rows} empty rows skipped")
+    
     if errors:
         print(f"[DEBUG] Errors found: {errors}")
         raise HTTPException(status_code=400, detail=errors)
+    
+    # SECOND PASS: Use bulk method for both fx_capture and unified_data updates
+    if forex_objects:
+        try:
+            print(f"[DEBUG] Using bulk method for {len(forex_objects)} trades")
+            forex_repository.save_forex_bulk(forex_objects, client_id)
+            print(f"[DEBUG] Bulk processing completed successfully")
+            
+            # Update unified data if client_id is provided
+            if client_id:
+                try:
+                    unified_data_service.update_unified_data_with_bulk_forex_trades(forex_objects, client_id)
+                    print(f"[DEBUG] Unified data updated successfully for {len(forex_objects)} trades")
+                except Exception as e:
+                    print(f"[DEBUG] Warning: unified_data bulk update failed: {str(e)}")
+                    # Don't fail the main operation if unified_data update fails
+            else:
+                print(f"[DEBUG] No unified_data update - client_id not provided")
+                
+        except Exception as e:
+            print(f"[DEBUG] Error in bulk processing: {str(e)}")
+            # Don't fail the main operation if bulk processing fails
+    
     return results
 
 @router.get("/forexs")
@@ -290,11 +357,6 @@ async def get_forex(TradeID: str):
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok"}
-
-@router.get("/test-overview")
-async def test_overview():
-    """Simple test endpoint"""
-    return {"message": "Test overview endpoint works"}
 
 @router.get("/overview-stats")
 async def get_overview_stats():

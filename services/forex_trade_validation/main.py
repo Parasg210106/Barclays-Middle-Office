@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Include the router
-app.include_router(router, prefix="/api")
+app.include_router(router, prefix="/api/forex-validation")
 
 @app.get("/")
 def root():

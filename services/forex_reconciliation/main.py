@@ -28,5 +28,5 @@ def simple_test():
 
 # Include the router
 
-app.include_router(router, prefix="/api/v1")
+app.include_router(router, prefix="/api/forex-reconciliation")
 

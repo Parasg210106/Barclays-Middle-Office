@@ -348,6 +348,15 @@
                 if (typeof window.loadAndShowTradeValidation === 'function') {
                     window.loadAndShowTradeValidation();
                 }
+            } else if (tabName === 'overview') {
+                // Special handling for Overview - fetch client IDs
+                if (typeof window.showView === 'function') {
+                    window.showView(tabName);
+                }
+                // Fetch client IDs when overview is selected
+                if (typeof window.fetchClientIDs === 'function') {
+                    window.fetchClientIDs();
+                }
             } else {
                 // Use showView for other tabs
                 if (typeof window.showView === 'function') {
@@ -398,6 +407,16 @@
                         </div>
                     </div>
 
+
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Client Selection</h3>
+                        <div class="flex items-center gap-4 mb-4">
+                            <label for="client-dropdown" class="text-sm font-medium text-gray-700">Select Client ID:</label>
+                            <select id="client-dropdown" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]" onchange="handleClientSelection()">
+                                <option value="">Loading client IDs...</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="bg-white p-6 rounded-lg shadow-md">
                         <div class="flex flex-wrap gap-4">
@@ -661,137 +680,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="consolidated-data-body"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- New Multi-Source Data Table -->
-                        <div class="bg-white p-4 rounded-lg shadow-md mt-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-2xl font-bold">Multi-Source Data</h2>
-                                <button id="save-multi-source-btn" onclick="saveMultiSourceData()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                    Save Selected Rows
-                                </button>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left text-black border-collapse" style="border: 1px solid #333;" id="multi-source-data-table">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
-                                        <tr>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Assign Document ID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeDate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ValueDate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeTime</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TraderID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Counterparty ID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BuySell</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">DealtCurrency</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">NotionalAmount</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">FXRate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Broker</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">MaturityDate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationTimestamp</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementDate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeVersion</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CancellationFlag</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">AmendmentFlag</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">RiskSystemID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">RegulatoryReportingStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeSourceSystem</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationMethod</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">TradeComplianceStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">KYCCheck</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ExceptionFlag</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">AuditTrailRef</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CommissionAmount</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CommissionCurrency</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BrokerageFee</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BrokerageCurrency</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CustodyFee</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CustodyCurrency</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">SettlementCost</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">FXGainLoss</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">PnlCalculated</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostAllocationStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostCenter</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">CostBookedDate</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Type</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Description</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Resolution</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reporting Regulation</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Exception Reason</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reporting Resolution</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">RID</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ISIN</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Symbol</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Trading Venue</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Stock_Currency</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Country_of_Trade</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Instrument_Status</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ClientID_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">KYC_Status_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Reference_Data_Validated</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Margin_Type</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Margin_Status</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Client_Approval_Status_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Client Approval Status(forex)</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Custodian_Ac_no</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Cycle</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">EffectiveDate_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationStatus_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">SWIFT_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BeneficiaryName_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Account_Number_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ABA_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BSB_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">IBAN_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">SORT_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Zengin_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Method_Equity</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ConfirmationStatus_Forex</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">account</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">BeneficiaryName_Forex</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">ABA_Forex</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Zengin_Forex</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">Settlement_Method_Forex</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">uniqueid</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">callAmount</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">exposure</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">bookingStatus</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">disputeAmount</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">priceMovement</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">bookingType</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">disputeReason</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">marginCallId</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">comments</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">reason</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">agreedAmount</th>
-                                            <th class="px-4 py-2" style="border: 1px solid #333;">client</th>
-                                            <th class="px-4 py-2 border border-gray-300">notes</th>
-                                            <th class="px-4 py-2 border border-gray-300">date</th>
-                                            <th class="px-4 py-2 border border-gray-300">marginRequirement</th>
-                                            <th class="px-4 py-2 border border-gray-300">accountName</th>
-                                            <th class="px-4 py-2 border border-gray-300">domicile</th>
-                                            <th class="px-4 py-2 border border-gray-300">mta.amount</th>
-                                            <th class="px-4 py-2 border border-gray-300">mta.currency</th>
-                                            <th class="px-4 py-2 border border-gray-300">currencies</th>
-                                            <th class="px-4 py-2 border border-gray-300">assets</th>
-                                            <th class="px-4 py-2 border border-gray-300">holidays</th>
-                                            <th class="px-4 py-2 border border-gray-300">threshold</th>
-                                            <th class="px-4 py-2 border border-gray-300">reportingCurrency</th>
-                                            <th class="px-4 py-2 border border-gray-300">contact.phone</th>
-                                            <th class="px-4 py-2 border border-gray-300">contact.email</th>
-                                            <th class="px-4 py-2 border border-gray-300">notificationTime</th>
-                                            <th class="px-4 py-2 border border-gray-300">principalEntity</th>
-                                            <th class="px-4 py-2 border border-gray-300">direction</th>
-                                            <th class="px-4 py-2 border border-gray-300">clientId</th>
-                                            <th class="px-4 py-2 border border-gray-300">Validation status</th>
-                                            <th class="px-4 py-2 border border-gray-300">Event Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="multi-source-data-body"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -1277,19 +1165,19 @@ function getActionStatement(field, reconciliationType) {
                 // Use equity service endpoints
                 switch(type) {
                     case 'systemA': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-systemA-capture/upload_systemA_csv';
+                        endpoint = 'http://localhost:8021/api/equity-systemA-capture/upload_systemA_csv';
                         serviceName = 'Equity System A';
                         break;
                     case 'systemB': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-systemB-capture/upload_systemB_csv';
+                        endpoint = 'http://localhost:8022/api/equity-systemB-capture/upload_systemB_csv';
                         serviceName = 'Equity System B';
                         break;
                     case 'fo': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-FOentry-capture/upload_FOentry_csv';
+                        endpoint = 'http://localhost:8027/api/equity-FOentry-capture/upload_FOentry_csv';
                         serviceName = 'Equity Front Office';
                         break;
                     case 'bo': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/equity-BOentry-capture/upload_BOentry_csv';
+                        endpoint = 'http://localhost:8023/api/equity-BOentry-capture/upload_BOentry_csv';
                         serviceName = 'Equity Back Office';
                         break;
                 }
@@ -1297,19 +1185,19 @@ function getActionStatement(field, reconciliationType) {
                 // Use forex service endpoints (existing)
                 switch(type) {
                     case 'systemA': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemA-capture/upload_systemA_csv';
+                        endpoint = 'http://localhost:8017/api/forex-systemA-capture/upload_systemA_csv';
                         serviceName = 'Forex System A';
                         break;
                     case 'systemB': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-systemB-capture/upload_systemB_csv';
+                        endpoint = 'http://localhost:8018/api/forex-systemB-capture/upload_systemB_csv';
                         serviceName = 'Forex System B';
                         break;
                     case 'fo': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-FOentry-capture/upload_FOentry_csv';
+                        endpoint = 'http://localhost:8019/api/forex-FOentry-capture/upload_FOentry_csv';
                         serviceName = 'Forex Front Office';
                         break;
                     case 'bo': 
-                        endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-BOentry-capture/upload_BOentry_csv';
+                        endpoint = 'http://localhost:8020/api/forex-BOentry-capture/upload_BOentry_csv';
                         serviceName = 'Forex Back Office';
                         break;
                 }
@@ -1338,7 +1226,7 @@ function getActionStatement(field, reconciliationType) {
     </script>
     <script>
         // --- CONFIG ---
-        const TRADE_LIFECYCLE_API_BASE = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/trade-lifecycle'; // Backend URL for Trade Lifecycle service
+        const TRADE_LIFECYCLE_API_BASE = 'http://localhost:8024/api/trade-lifecycle'; // Backend URL for Trade Lifecycle service
         
         // Helper function to safely set text content
         function safeSetTextContent(elementId, text) {
@@ -2414,6 +2302,14 @@ function getActionStatement(field, reconciliationType) {
                 window.loadOverviewStatsOnPageLoad();
             } else {
                 console.log('Debug: loadOverviewStatsOnPageLoad function not found');
+            }
+            
+            // Fetch client IDs on page load since overview is default
+            if (typeof window.fetchClientIDs === 'function') {
+                console.log('Debug: Calling fetchClientIDs on page load');
+                window.fetchClientIDs();
+            } else {
+                console.log('Debug: fetchClientIDs function not found');
             }
             // If landing on lifecycle, set defaults
             if (document.getElementById('lifecycle-events').classList.contains('active')) {
