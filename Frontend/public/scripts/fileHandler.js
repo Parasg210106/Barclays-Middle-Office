@@ -423,13 +423,23 @@ function sendBulkTrades(trades, endpoint) {
     
     console.log(`[DEBUG] Selected client ID:`, selectedClientId);
     
-    // Add client_id as query parameter if it's a forex endpoint and client is selected
+    // For forex endpoints, send client_id in request body instead of query params
+    let requestBody;
     let finalEndpoint = endpoint;
+    
     if (endpoint.includes('forex-capture') && selectedClientId && selectedClientId.trim() !== '') {
-        finalEndpoint = `${endpoint}?client_id=${encodeURIComponent(selectedClientId.trim())}`;
-        console.log(`[DEBUG] Updated endpoint with client_id:`, finalEndpoint);
+        // Send client_id in request body for forex
+        requestBody = {
+            trades: trades,
+            client_id: selectedClientId.trim()
+        };
+        console.log(`[DEBUG] Sending forex trades with client_id in body:`, requestBody);
     } else if (endpoint.includes('forex-capture') && (!selectedClientId || selectedClientId.trim() === '')) {
         console.warn(`[DEBUG] No client ID selected for forex capture. Trades will be captured but unified_data won't be updated.`);
+        requestBody = trades;
+    } else {
+        // For equity endpoints, send trades directly
+        requestBody = trades;
     }
     
     fetch(finalEndpoint, {
@@ -437,7 +447,7 @@ function sendBulkTrades(trades, endpoint) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(trades)
+        body: JSON.stringify(requestBody)
     })
     .then(response => {
         if (!response.ok) {
@@ -469,12 +479,19 @@ window.uploadSingleForexTrade = function(tradeData) {
     
     console.log(`[DEBUG] Uploading single forex trade with client ID:`, selectedClientId);
     
-            let endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forex';
+    let endpoint = 'https://54d7f9c3-2fe1-46e0-8f0a-0b442b0a533b-00-2obqixk2e61k1.sisko.replit.dev:9000/api/forex-capture/forex';
+    
+    // For single forex trade, send client_id in request body
+    let requestBody;
     if (selectedClientId && selectedClientId.trim() !== '') {
-        endpoint = `${endpoint}?client_id=${encodeURIComponent(selectedClientId.trim())}`;
-        console.log(`[DEBUG] Updated endpoint with client_id:`, endpoint);
+        requestBody = {
+            ...tradeData,
+            client_id: selectedClientId.trim()
+        };
+        console.log(`[DEBUG] Sending single forex trade with client_id in body:`, requestBody);
     } else {
         console.warn(`[DEBUG] No client ID selected. Trade will be captured but unified_data won't be updated.`);
+        requestBody = tradeData;
     }
     
     return fetch(endpoint, {
@@ -482,7 +499,7 @@ window.uploadSingleForexTrade = function(tradeData) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(tradeData)
+        body: JSON.stringify(requestBody)
     })
     .then(response => {
         if (!response.ok) {

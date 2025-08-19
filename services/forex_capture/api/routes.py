@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from services.forex_capture.models import Forex
 from services.forex_capture.services.capture_service import forex_capture_service
 from services.forex_capture.services.unified_data_service import UnifiedDataService
@@ -215,78 +215,95 @@ def normalize_csv_data(data: dict) -> dict:
     return normalized
 
 @router.post("/forex", response_model=Forex)
-async def add_forex(forex: Forex, client_id: str = None):
+async def add_forex(request: Request):
     try:
-        print(f"[DEBUG] Single trade capture initiated for TradeID: {forex.TradeID}")
-        print(f"[DEBUG] Client ID from dropdown: {client_id}")
+        # Get the entire request body
+        body = await request.json()
+        
+        # Extract trade data and client_id from request body
+        if isinstance(body, dict):
+            trade_data = {k: v for k, v in body.items() if k != 'client_id'}
+            client_id = body.get('client_id', '')
+        else:
+            # Fallback for old format (trade sent directly)
+            trade_data = body
+            client_id = ''
+        
+        print(f"[DEBUG] Client ID from request body: '{client_id}'")
+        
+        # Create Forex object from trade data
+        forex = Forex.parse_obj(trade_data)
         
         # Check for duplicate in Firestore
         if forex_repository.get_forex(forex.TradeID):
             raise HTTPException(status_code=400, detail=f"TradeID '{forex.TradeID}' already exists")
-        
-        # Save the trade to forex repository
-        forex_repository.save_forex(forex, client_id)
-        
-        # Update unified data if client_id is provided
+        forex_repository.save_forex(forex)
+
+        # Update unified_data if client_id is provided
         if client_id:
             try:
-                unified_data_service.update_unified_data_with_forex_trade(forex, client_id)
-                print(f"[DEBUG] Trade {forex.TradeID} successfully captured and unified_data updated for client {client_id}")
+                from services.forex_capture.services.unified_data_service import unified_data_service
+                success = unified_data_service.update_unified_data_with_forex_trade(forex, client_id)
+                if success:
+                    print(f"[DEBUG] Successfully updated unified_data for trade {forex.TradeID}")
+                else:
+                    print(f"[DEBUG] Failed to update unified_data for trade {forex.TradeID}")
             except Exception as e:
-                print(f"[DEBUG] Warning: unified_data update failed for {forex.TradeID}: {str(e)}")
-                # Don't fail the main operation if unified_data update fails
-        else:
-            print(f"[DEBUG] Trade {forex.TradeID} successfully captured (no unified_data update - client_id not provided)")
-        
+                print(f"[DEBUG] Error updating unified_data: {str(e)}")
+
         return forex
     except Exception as e:
-        print(f"[DEBUG] Error in single trade capture for {forex.TradeID}: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/forexs/bulk", response_model=List[Forex])
-async def bulk_capture_forexs(forexs_data: List[dict], client_id: str = None):
-    # Validate and process the forex data
-    results = []
-    errors = []
+async def bulk_capture_forexs(request: Request):
+    # Get the entire request body
+    body = await request.json()
+    
+    # Extract trades and client_id from request body
+    if isinstance(body, dict):
+        forexs_data = body.get('trades', [])
+        client_id = body.get('client_id', '')
+    else:
+        # Fallback for old format (trades sent directly)
+        forexs_data = body
+        client_id = ''
     
     print(f"[DEBUG] Received {len(forexs_data)} trades for bulk processing")
-    print(f"[DEBUG] Client ID from dropdown: {client_id}")
+    print(f"[DEBUG] Client ID from request body: '{client_id}'")
     
-    # First pass: validate and create Forex objects
-    forex_objects = []
-    
+    results = []
+    errors = []
+
     for i, forex_data in enumerate(forexs_data):
         try:
             print(f"[DEBUG] Processing trade {i+1}/{len(forexs_data)}")
             print(f"[DEBUG] Raw trade data: {forex_data}")
-            print(f"[DEBUG] Raw trade data keys: {list(forex_data.keys())}")
-            print(f"[DEBUG] Raw TradeID value: '{forex_data.get('TradeID', 'NOT_FOUND')}'")
-            print(f"[DEBUG] Raw TradeID type: {type(forex_data.get('TradeID'))}")
-            print(f"[DEBUG] Raw TradeID length: {len(str(forex_data.get('TradeID', '')))}")
-            print(f"[DEBUG] All raw values: {[(k, v, type(v)) for k, v in forex_data.items()]}")
-            
-            # Check if TradeID is present and not empty (frontend already normalized)
+
+            # Check if TradeID is present and not empty
             trade_id = forex_data.get("TradeID", "").strip()
-            print(f"[DEBUG] After strip - trade_id: '{trade_id}'")
-            print(f"[DEBUG] After strip - trade_id type: {type(trade_id)}")
-            print(f"[DEBUG] After strip - trade_id length: {len(str(trade_id))}")
-            
-            # Skip empty rows completely (don't count as errors)
             if not trade_id:
-                print(f"[DEBUG] Skipping empty row {i+1} - no TradeID")
+                errors.append({
+                    "TradeID": "EMPTY", 
+                    "error": "TradeID is required and cannot be empty"
+                })
                 continue
-            
-            print(f"[DEBUG] Found TradeID: {trade_id}")
-            
-            # Create Forex object from frontend-normalized data
+
+            # Normalize the data to handle column name variations
+            normalized_data = normalize_csv_data(forex_data)
+
+            # Debug: Print the normalized data before creating Forex object
+            print(f"[DEBUG] Normalized data for TradeID {trade_id}: {normalized_data}")
+
+            # Create Forex object from normalized data
             try:
-                forex = Forex.parse_obj(forex_data)
+                forex = Forex.parse_obj(normalized_data)
                 print(f"[DEBUG] Forex object created successfully for TradeID {trade_id}")
             except Exception as parse_error:
                 print(f"[DEBUG] Error parsing Forex object for TradeID {trade_id}: {parse_error}")
                 errors.append({"TradeID": trade_id, "error": f"Parsing error: {str(parse_error)}"})
                 continue
-            
+
             # Debug: Print the Forex object after parsing
             print(f"[DEBUG] Forex object created for TradeID {trade_id}:")
             print(f"[DEBUG] Account_Number_Equity: '{forex.Account_Number_Equity}'")
@@ -294,51 +311,38 @@ async def bulk_capture_forexs(forexs_data: List[dict], client_id: str = None):
             print(f"[DEBUG] ABA_Equity: '{forex.ABA_Equity}'")
             print(f"[DEBUG] BSB_Equity: '{forex.BSB_Equity}'")
             print(f"[DEBUG] Settlement_Method_Equity: '{forex.Settlement_Method_Equity}'")
-            
+
             if forex_repository.get_forex(forex.TradeID):
                 raise Exception(f"TradeID '{forex.TradeID}' already exists")
-            
-            # Collect valid Forex objects for bulk processing
-            forex_objects.append(forex)
+            forex_repository.save_forex(forex)
             results.append(forex)
-            
         except Exception as e:
             print(f"[DEBUG] Error processing trade {i+1}: {str(e)}")
             errors.append({"TradeID": forex_data.get("TradeID", "Unknown"), "error": str(e)})
-    
+
     print(f"[DEBUG] Processing complete. Results: {len(results)}, Errors: {len(errors)}")
-    
-    # Show summary of processing
-    total_rows = len(forexs_data)
-    skipped_rows = total_rows - len(results) - len(errors)
-    print(f"[DEBUG] Summary: {total_rows} total rows, {len(results)} processed, {len(errors)} errors, {skipped_rows} empty rows skipped")
-    
+
+    # Update unified_data if client_id is provided
+    if client_id and results:
+        print(f"[DEBUG] Client ID and results found, calling unified_data service")
+        try:
+            from services.forex_capture.services.unified_data_service import unified_data_service
+            print(f"[DEBUG] Successfully imported unified_data_service")
+            success = unified_data_service.update_unified_data_with_bulk_forex_trades(results, client_id)
+            if success:
+                print(f"[DEBUG] Successfully updated unified_data for {len(results)} trades with client_id: {client_id}")
+            else:
+                print(f"[DEBUG] Failed to update unified_data for trades with client_id: {client_id}")
+        except Exception as e:
+            print(f"[DEBUG] Error updating unified_data: {str(e)}")
+            import traceback
+            print(f"[DEBUG] Full traceback: {traceback.format_exc()}")
+    else:
+        print(f"[DEBUG] Skipping unified_data update - client_id: '{client_id}', results count: {len(results)}")
+
     if errors:
         print(f"[DEBUG] Errors found: {errors}")
         raise HTTPException(status_code=400, detail=errors)
-    
-    # SECOND PASS: Use bulk method for both fx_capture and unified_data updates
-    if forex_objects:
-        try:
-            print(f"[DEBUG] Using bulk method for {len(forex_objects)} trades")
-            forex_repository.save_forex_bulk(forex_objects, client_id)
-            print(f"[DEBUG] Bulk processing completed successfully")
-            
-            # Update unified data if client_id is provided
-            if client_id:
-                try:
-                    unified_data_service.update_unified_data_with_bulk_forex_trades(forex_objects, client_id)
-                    print(f"[DEBUG] Unified data updated successfully for {len(forex_objects)} trades")
-                except Exception as e:
-                    print(f"[DEBUG] Warning: unified_data bulk update failed: {str(e)}")
-                    # Don't fail the main operation if unified_data update fails
-            else:
-                print(f"[DEBUG] No unified_data update - client_id not provided")
-                
-        except Exception as e:
-            print(f"[DEBUG] Error in bulk processing: {str(e)}")
-            # Don't fail the main operation if bulk processing fails
-    
     return results
 
 @router.get("/forexs")
